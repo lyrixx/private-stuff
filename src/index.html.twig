@@ -7,27 +7,43 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
     <style>
         :root {
-            --primary: #94a3b8;
-            --primary-dark: #64748b;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text: #334155;
-            --text-secondary: #64748b;
-            --code-bg: #cbd5e1;
-        }
+            --color-primary: #2af598;
+            --color-primary-dark: #1b8f5f;
+            --color-primary-light: #73ffca;
+            --color-bg: #101820;
+            --color-surface: #1c1f26;
+            --color-border: #2e3440;
+            --color-text: #d8dee9;
+            --color-text-secondary: #81a1c1;
+            --color-code-bg: #1f2937;
+            --color-code-border: #3b82f6;
+            --color-code-text: #ffffff;
+            --color-code-hover-bg: #3b82f6;
+            --color-code-hover-border: #60a5fa;
+            --color-code-hover-text: #ffffff;
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --spacing-small: 0.5rem;
+            --spacing-medium: 1rem;
+            --spacing-large: 1.5rem;
+
+            --radius-small: 6px;
+            --radius-medium: 8px;
+            --radius-large: 12px;
+
+            --font-size-small: 0.85rem;
+            --font-size-medium: 1rem;
+            --font-size-large: 1.25rem;
+            --font-size-title: 2rem;
+
+            --shadow-light: 0 2px 4px -1px rgba(0, 0, 0, 0.05);
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            background: var(--color-bg);
+            color: var(--color-text);
             line-height: 1.5;
-            padding: 1.5rem 1rem;
+            padding: var(--spacing-large) var(--spacing-medium);
             min-height: 100vh;
         }
 
@@ -38,29 +54,29 @@
 
         header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: var(--spacing-large);
         }
 
         h1 {
-            font-size: 2rem;
+            font-size: var(--font-size-title);
             font-weight: 600;
-            color: #818cf8;
-            margin-bottom: 0.5rem;
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-small);
         }
 
         .subtitle {
-            color: var(--text-secondary);
+            color: var(--color-text-secondary);
             font-size: 0.95rem;
         }
 
         .site-section {
-            background: var(--surface);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.05);
-            transition: transform 0.2s ease;
-            border: 1px solid #e2e8f0;
+            background: var(--color-surface);
+            border-radius: var(--radius-large);
+            padding: var(--spacing-large);
+            margin-bottom: var(--spacing-large);
+            box-shadow: var(--shadow-light);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--color-border);
         }
 
         .site-section:hover {
@@ -70,11 +86,11 @@
         .site-title {
             display: flex;
             align-items: center;
-            font-size: 1.25rem;
-            color: #818cf8;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid #e2e8f0;
+            font-size: var(--font-size-large);
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-medium);
+            padding-bottom: var(--spacing-small);
+            border-bottom: 2px solid var(--color-border);
         }
 
         .site-title::before {
@@ -82,23 +98,23 @@
             display: inline-block;
             width: 6px;
             height: 20px;
-            background: #818cf8;
-            border-radius: 3px;
-            margin-right: 10px;
+            background: var(--color-primary);
+            border-radius: var(--radius-small);
+            margin-right: var(--spacing-small);
         }
 
         .account {
-            background: #fafafc;
-            border-radius: 8px;
-            padding: 1.25rem;
-            margin: 0.75rem 0;
-            border: 1px solid #e2e8f0;
+            background: var(--color-bg);
+            border-radius: var(--radius-medium);
+            padding: var(--spacing-medium);
+            margin: var(--spacing-small) 0;
+            border: 1px solid var(--color-border);
         }
 
         .username {
-            font-size: 1rem;
-            color: var(--text);
-            margin-bottom: 0.75rem;
+            font-size: var(--font-size-medium);
+            color: var(--color-text);
+            margin-bottom: var(--spacing-small);
             font-weight: 500;
             display: flex;
             align-items: center;
@@ -106,33 +122,33 @@
 
         .username::before {
             content: '👤';
-            margin-right: 8px;
+            margin-right: var(--spacing-small);
             font-size: 0.9rem;
         }
 
         .codes {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 0.5rem;
+            gap: var(--spacing-small);
         }
 
         .code {
             font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
-            background: #fae8ff;
-            color: #86198f;
-            padding: 0.6rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
+            background: var(--color-code-bg);
+            color: var(--color-primary-dark);
+            padding: var(--spacing-small);
+            border-radius: var(--radius-small);
+            font-size: var(--font-size-small);
             user-select: all;
             cursor: pointer;
-            transition: all 0.2s ease;
             text-align: center;
             position: relative;
-            border: 1px solid #f5d0fe;
+            border: 1px solid var(--color-code-border);
+            transition: background 0.2s ease, transform 0.2s ease;
         }
 
         .code:hover {
-            background: #f5d0fe;
+            background: var(--color-code-hover);
             transform: scale(1.02);
         }
 
@@ -145,11 +161,12 @@
             position: absolute;
             bottom: -25px;
             left: 50%;
+            width: 100%;
             transform: translateX(-50%);
-            background: #f5d0fe;
-            color: #86198f;
+            background: var(--color-code-hover);
+            color: var(--color-primary-dark);
             padding: 3px 6px;
-            border-radius: 4px;
+            border-radius: var(--radius-small);
             font-size: 0.7rem;
             opacity: 0;
             transition: opacity 0.2s ease;
@@ -162,11 +179,11 @@
 
         @media (max-width: 640px) {
             body {
-                padding: 1rem 0.75rem;
+                padding: var(--spacing-medium) var(--spacing-small);
             }
 
             .site-section {
-                padding: 1.25rem;
+                padding: var(--spacing-medium);
             }
 
             .codes {

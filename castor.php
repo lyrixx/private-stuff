@@ -65,9 +65,9 @@ function build(bool $noOpen = false): void
             '--template-title', 'Secret Box',
             '--template-instructions', $defaultPassword ? 'Try "pass"' : '', // Empty on purpose when real password
             '--template-button', 'Open',
-            '--short',
-            '--remember', 'false',
+            '--remember', 'false', // Since data are sensitive, we don't want to remember the password
             '-d', 'build',
+            ...($defaultPassword ? ['--short'] : []),
             'src/index.html',
         ],
         context: context()

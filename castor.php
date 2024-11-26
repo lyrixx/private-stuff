@@ -60,8 +60,8 @@ function build(bool $noOpen = false): void
         command: [
             __DIR__.'/node_modules/.bin/staticrypt',
             '--config', 'false', // No need to store the salt, remember me is disabled
-            '--template-color-primary', 'rgb(43, 166, 255)',
-            '--template-color-secondary', 'black',
+            '--template-color-primary', '#2af598',
+            '--template-color-secondary', '#101820',
             '--template-title', 'Secret Box',
             '--template-instructions', $defaultPassword ? 'Try "pass"' : '', // Empty on purpose when real password
             '--template-button', 'Open',

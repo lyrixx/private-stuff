@@ -1,0 +1,7 @@
+{
+  "name": "private-stuff",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "staticrypt": "^3.5.0"
+  }
+}

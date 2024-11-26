@@ -1,0 +1,7 @@
+/.castor.stub.php
+/.castor/vendor/
+/.env.local
+/build/
+/data/websites.yaml
+/node_modules/
+/src/index.html

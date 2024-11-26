@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA Recovery Codes</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <style>
+        :root {
+            --primary: #94a3b8;
+            --primary-dark: #64748b;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #334155;
+            --text-secondary: #64748b;
+            --code-bg: #cbd5e1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 1.5rem 1rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #818cf8;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .site-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.05);
+            transition: transform 0.2s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .site-section:hover {
+            transform: translateY(-1px);
+        }
+
+        .site-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.25rem;
+            color: #818cf8;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .site-title::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 20px;
+            background: #818cf8;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+
+        .account {
+            background: #fafafc;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 0.75rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .username {
+            font-size: 1rem;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .username::before {
+            content: '👤';
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        .codes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .code {
+            font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+            background: #fae8ff;
+            color: #86198f;
+            padding: 0.6rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            user-select: all;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            position: relative;
+            border: 1px solid #f5d0fe;
+        }
+
+        .code:hover {
+            background: #f5d0fe;
+            transform: scale(1.02);
+        }
+
+        .code:active {
+            transform: scale(0.98);
+        }
+
+        .code::after {
+            content: 'Click to copy';
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f5d0fe;
+            color: #86198f;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        .code:hover::after {
+            opacity: 1;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem 0.75rem;
+            }
+
+            .site-section {
+                padding: 1.25rem;
+            }
+
+            .codes {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>2FA Recovery Codes</h1>
+            <p class="subtitle">Securely store your two-factor authentication backup codes</p>
+        </header>
+
+        {% for website in websites %}
+            <div class="site-section">
+                <h2 class="site-title">{{ website.name}}</h2>
+                {% for account in website.accounts %}
+                    <div class="account">
+                        <div class="username">{{ account.name }}</div>
+                        <div class="codes">
+                            {% for code in account.codes %}
+                                <span class="code">{{ code }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        document.querySelectorAll('.code').forEach(code => {
+            code.addEventListener('click', function() {
+                navigator.clipboard.writeText(this.textContent);
+                const originalText = this.textContent;
+                this.textContent = 'Copied!';
+                setTimeout(() => {
+                    this.textContent = originalText;
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+</html>

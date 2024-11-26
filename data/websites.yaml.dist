@@ -1,0 +1,15 @@
+- name: Google
+  accounts:
+      - name: foo@bar.com
+        codes:
+            - secret1
+            - secret2
+      - name: "baz@gmail.com"
+        codes:
+            - secret2
+- name: Github
+  accounts:
+      - name: foo
+        codes:
+            - secret1
+            - secret2

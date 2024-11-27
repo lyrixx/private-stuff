@@ -46,24 +46,23 @@ function build(bool $noOpen = false): void
     fs()->mkdir(__DIR__.'/var/tmp');
     fs()->mirror(__DIR__.'/src/cloudflare-functions', __DIR__.'/dist/functions');
 
-    $recoveryCodes = __DIR__.'/data/recovery_codes.yaml';
-    if (!is_file($recoveryCodes) || variable('TEST')) {
+    $recoveryCodesFilename = __DIR__.'/data/recovery_codes.yaml';
+    if (!is_file($recoveryCodesFilename) || variable('TEST')) {
         io()->warning('No websites data found, using the default one');
-        $recoveryCodes = __DIR__.'/data/recovery_codes.yaml.dist';
+        $recoveryCodesFilename = __DIR__.'/data/recovery_codes.yaml.dist';
     }
 
     $twig = build_twig();
 
     $index = $twig->render('index.html.twig');
     $recoveryCodes = $twig->render('recovery-codes.html.twig', [
-        'recovery_codes' => yaml_parse(file_get_contents($recoveryCodes)),
+        'recovery_codes' => yaml_parse(file_get_contents($recoveryCodesFilename)),
     ]);
     $staticrypt = $twig->render('staticrypt.html.twig');
     $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
     $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig');
 
     file_put_contents(__DIR__.'/dist/public/index.html', $index);
-    file_put_contents(__DIR__.'/dist/public/staticrypt.html', $staticrypt);
     file_put_contents(__DIR__.'/dist/functions/template.ts', $cloudflareTemplateJs);
     // Some files are put in tmp/ directory only for debug purpose
     file_put_contents(__DIR__.'/var/tmp/index.html', $index);
@@ -306,7 +305,7 @@ function staticrypt(string $title, string $filename): void
             '--remember', 'false', // Since data are sensitive, we don't want to remember the password
             ...(variable('defaultPassword') ? ['--short'] : []),
             '-d', 'dist/public',
-            __DIR__."/var/tmp/$filename",
+            __DIR__."/var/tmp/{$filename}",
         ],
         context: context()
             ->withEnvironment([

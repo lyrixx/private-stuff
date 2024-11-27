@@ -128,7 +128,7 @@ function openCloudflare(): void
 #[AsTask(description: 'Deploy the project to Cloudflare', aliases: ['deploy'])]
 function deploy(): void
 {
-    if (variable('defaultPassword')) {
+    if (variable('defaultCfpPassword')) {
         throw new \RuntimeException('You cannot deploy the project with the default password');
     }
 

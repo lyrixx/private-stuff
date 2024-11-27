@@ -36,9 +36,8 @@ function build(bool $noOpen = false): void
 
     io()->title('Building the project');
 
-    $defaultPassword = variable('defaultPassword');
-    if ($defaultPassword) {
-        io()->warning('Using the default password. Set the PASSWORD environment variable to change it.');
+    if (variable('defaultPassword')) {
+        io()->warning('Using the default password. Set the PASSWORD environment variable to change it, or use a `.env.local` file.');
     }
 
     fs()->remove(__DIR__.'/dist');
@@ -47,64 +46,32 @@ function build(bool $noOpen = false): void
     fs()->mkdir(__DIR__.'/var/tmp');
     fs()->mirror(__DIR__.'/src/cloudflare-functions', __DIR__.'/dist/functions');
 
-    $websites = __DIR__.'/data/websites.yaml';
-    if (!is_file($websites)) {
+    $recoveryCodes = __DIR__.'/data/recovery_codes.yaml';
+    if (!is_file($recoveryCodes)) {
         io()->warning('No websites data found, using the default one');
-        $websites = __DIR__.'/data/websites.yaml.dist';
+        $recoveryCodes = __DIR__.'/data/recovery_codes.yaml.dist';
     }
 
-    $twig = new Environment(
-        new FilesystemLoader([
-            __DIR__.'/src',
-        ]),
-        [
-            'debug' => true,
-            'strict_variables' => true,
-        ]
-    );
-    // Hack to make the watch function works, we want to invalide the cache every time!
-    $r = new \ReflectionProperty($twig, 'optionsHash');
-    $r->setValue($twig, $r->getValue($twig).bin2hex(random_bytes(32)));
+    $twig = build_twig();
 
-    $recoveryCodes = $twig->render('recovery-codes.html.twig', [
-        'websites' => yaml_parse(file_get_contents($websites)),
-    ]);
     $index = $twig->render('index.html.twig');
-    $staticrypt = $twig->render('staticrypt.html.twig', [
-        'default_password' => variable('defaultPassword'),
+    $recoveryCodes = $twig->render('recovery-codes.html.twig', [
+        'recovery_codes' => yaml_parse(file_get_contents($recoveryCodes)),
     ]);
-    $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig', [
-        'default_password' => variable('defaultPassword'),
-    ]);
-    $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig', [
-        'default_password' => variable('defaultPassword'),
-    ]);
+    $staticrypt = $twig->render('staticrypt.html.twig');
+    $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
+    $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig');
 
     file_put_contents(__DIR__.'/dist/public/index.html', $index);
     file_put_contents(__DIR__.'/dist/public/staticrypt.html', $staticrypt);
     file_put_contents(__DIR__.'/dist/functions/template.ts', $cloudflareTemplateJs);
-    // Some files are put in tmp only for the debug
+    // Some files are put in tmp/ directory only for debug purpose
     file_put_contents(__DIR__.'/var/tmp/index.html', $index);
     file_put_contents(__DIR__.'/var/tmp/cloudflare-template.html', $cloudflareTemplateHtml);
     file_put_contents(__DIR__.'/var/tmp/staticrypt.html', $staticrypt);
     file_put_contents(__DIR__.'/var/tmp/recovery-codes.html', $recoveryCodes);
 
-    run(
-        command: [
-            __DIR__.'/node_modules/.bin/staticrypt',
-            '--template', __DIR__.'/var/tmp/staticrypt.html',
-            '--template-title', 'Recovery codes',
-            '--config', 'false', // No need to store the salt, remember me is disabled
-            '--remember', 'false', // Since data are sensitive, we don't want to remember the password
-            ...($defaultPassword ? ['--short'] : []),
-            '-d', 'dist/public',
-            __DIR__.'/var/tmp/recovery-codes.html',
-        ],
-        context: context()
-            ->withEnvironment([
-                'STATICRYPT_PASSWORD' => variable('PASSWORD'),
-            ])
-    );
+    staticrypt('Recovery codes', 'recovery-codes.html');
 
     io()->success('Project built');
 
@@ -136,6 +103,9 @@ function openTmp(): void
 #[AsTask('open-cloudflare', description: 'Open the cloudflare build in the browser', aliases: ['open-cloudflare'])]
 function openCloudflare(): void
 {
+    if (variable('defaultCfpPassword')) {
+        io()->warning('Using the default password for Cloudflare. Set the CFP_PASSWORD environment variable to change it.');
+    }
     if (variable('defaultPassword')) {
         io()->warning('Using the default password. Set the PASSWORD environment variable to change it.');
     }
@@ -292,7 +262,48 @@ function create_context(): Context
     $data['PASSWORD'] ?? throw new \RuntimeException('The PASSWORD environment variable is required');
     $data['defaultPassword'] = 'pass' === $data['PASSWORD'];
     $data['CFP_PASSWORD'] ?? throw new \RuntimeException('The CFP_PASSWORD environment variable is required');
-    $data['defaultCfpPass'] = 'pass' === $data['CFP_PASSWORD'];
+    $data['defaultCfpPassword'] = 'pass' === $data['CFP_PASSWORD'];
 
     return new Context($data);
+}
+
+function build_twig(): Environment
+{
+    $twig = new Environment(
+        new FilesystemLoader([
+            __DIR__.'/src',
+        ]),
+        [
+            'debug' => true,
+            'strict_variables' => true,
+        ]
+    );
+    // Hack to make the watch function works, we want to invalide the cache every time!
+    $r = new \ReflectionProperty($twig, 'optionsHash');
+    $r->setValue($twig, $r->getValue($twig).bin2hex(random_bytes(32)));
+
+    $twig->addGlobal('default_password', variable('defaultPassword'));
+    $twig->addGlobal('default_cfp_password', variable('defaultCfpPassword'));
+
+    return $twig;
+}
+
+function staticrypt(string $title, string $filename): void
+{
+    run(
+        command: [
+            __DIR__.'/node_modules/.bin/staticrypt',
+            '--template', __DIR__.'/var/tmp/staticrypt.html',
+            '--template-title', $title,
+            '--config', 'false', // No need to store the salt, remember me is disabled
+            '--remember', 'false', // Since data are sensitive, we don't want to remember the password
+            ...(variable('defaultPassword') ? ['--short'] : []),
+            '-d', 'dist/public',
+            __DIR__."/var/tmp/$filename",
+        ],
+        context: context()
+            ->withEnvironment([
+                'STATICRYPT_PASSWORD' => variable('PASSWORD'),
+            ])
+    );
 }

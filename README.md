@@ -1,9 +1,10 @@
 # My Private Stuff
 
-This repository contains some toolings to build a protected HTML pages with a
-password.
+This repository contains tools for building static HTML pages, some of which are
+password-protected. It also contains other tools to help me secure my private
+affairs.
 
-Basically, this page contains some private stuff I may need if I lost my phone
+The website contains some private information I may need if I lost my phone
 while traveling the world. For now it contains:
 
 * My 2FA recovery codes
@@ -51,7 +52,8 @@ setup the password protection.
 3. run `castor build`
 4. deploy `dist/public/index.html` somewhere
 
-If you use cloudflare, you can deploy the `dist/` folder to a worker.
+    >[!NOTE]
+    > If plan to use cloudflare, just use `castor deploy`
 
 ## License
 

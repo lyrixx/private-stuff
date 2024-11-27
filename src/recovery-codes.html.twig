@@ -4,7 +4,7 @@
 {% block subtitle %}Find bellow all your 2FA recovery codes</{% endblock %}
 
 {% block container %}
-    {% for website in websites %}
+    {% for website in recovery_codes %}
         <div class="site-section">
             <h2 class="site-title">{{ website.name}}</h2>
             {% for account in website.accounts %}

@@ -1,0 +1,37 @@
+{% extends "base_login.html.twig" %}
+
+{% block title %}2FA Recovery Codes{% endblock %}
+{% block subtitle %}Find bellow all your 2FA recovery codes</{% endblock %}
+
+{% block container %}
+    {% for website in websites %}
+        <div class="site-section">
+            <h2 class="site-title">{{ website.name}}</h2>
+            {% for account in website.accounts %}
+                <div class="account">
+                    <div class="username">{{ account.name }}</div>
+                    <div class="codes">
+                        {% for code in account.codes %}
+                            <span class="code">{{ code }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.querySelectorAll('.code').forEach(code => {
+            code.addEventListener('click', function() {
+                navigator.clipboard.writeText(this.textContent);
+                const originalText = this.textContent;
+                this.textContent = 'Copied!';
+                setTimeout(() => {
+                    this.textContent = originalText;
+                }, 1000);
+            });
+        });
+    </script>
+{% endblock %}

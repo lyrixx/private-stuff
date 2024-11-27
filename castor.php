@@ -6,7 +6,7 @@ use Castor\Attribute\AsContext;
 use Castor\Attribute\AsTask;
 use Castor\Context;
 use Twig\Environment;
-use Twig\Loader\ArrayLoader;
+use Twig\Loader\FilesystemLoader;
 
 use function Castor\context;
 use function Castor\finder;
@@ -16,6 +16,7 @@ use function Castor\load_dot_env;
 use function Castor\open;
 use function Castor\run;
 use function Castor\variable;
+use function Castor\watch;
 use function Castor\yaml_parse;
 
 #[AsTask(description: 'Install the dependencies')]
@@ -35,70 +36,155 @@ function build(bool $noOpen = false): void
 
     io()->title('Building the project');
 
-    if (!is_file(__DIR__.'/data/websites.yaml')) {
-        io()->warning('No websites data found, copying the default one');
-
-        fs()->copy(__DIR__.'/data/websites.yaml.dist', __DIR__.'/data/websites.yaml');
-    }
-
-    $twig = new Environment(new ArrayLoader([
-        'index.html.twig' => file_get_contents(__DIR__.'/src/index.html.twig'),
-    ]));
-
-    $raw = $twig->render('index.html.twig', [
-        'websites' => yaml_parse(file_get_contents(__DIR__.'/data/websites.yaml')),
-    ]);
-
-    file_put_contents(__DIR__.'/src/index.html', "<!-- This page has been generated using Twig templating engine. -->\n".$raw);
-
-    $password = variable('PASSWORD');
     $defaultPassword = variable('defaultPassword');
-
     if ($defaultPassword) {
         io()->warning('Using the default password. Set the PASSWORD environment variable to change it.');
     }
 
+    fs()->remove(__DIR__.'/dist');
+    fs()->mkdir(__DIR__.'/dist/public');
+    fs()->remove(__DIR__.'/var/tmp');
+    fs()->mkdir(__DIR__.'/var/tmp');
+    fs()->mirror(__DIR__.'/src/cloudflare-functions', __DIR__.'/dist/functions');
+
+    $websites = __DIR__.'/data/websites.yaml';
+    if (!is_file($websites)) {
+        io()->warning('No websites data found, using the default one');
+        $websites = __DIR__.'/data/websites.yaml.dist';
+    }
+
+    $twig = new Environment(
+        new FilesystemLoader([
+            __DIR__.'/src',
+        ]),
+        [
+            'debug' => true,
+            'strict_variables' => true,
+        ]
+    );
+    // Hack to make the watch function works, we want to invalide the cache every time!
+    $r = new \ReflectionProperty($twig, 'optionsHash');
+    $r->setValue($twig, $r->getValue($twig).bin2hex(random_bytes(32)));
+
+    $recoveryCodes = $twig->render('recovery-codes.html.twig', [
+        'websites' => yaml_parse(file_get_contents($websites)),
+    ]);
+    $index = $twig->render('index.html.twig');
+    $staticrypt = $twig->render('staticrypt.html.twig', [
+        'default_password' => variable('defaultPassword'),
+    ]);
+    $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig', [
+        'default_password' => variable('defaultPassword'),
+    ]);
+    $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig', [
+        'default_password' => variable('defaultPassword'),
+    ]);
+
+    file_put_contents(__DIR__.'/dist/public/index.html', $index);
+    file_put_contents(__DIR__.'/dist/public/staticrypt.html', $staticrypt);
+    file_put_contents(__DIR__.'/dist/functions/template.ts', $cloudflareTemplateJs);
+    // Some files are put in tmp only for the debug
+    file_put_contents(__DIR__.'/var/tmp/index.html', $index);
+    file_put_contents(__DIR__.'/var/tmp/cloudflare-template.html', $cloudflareTemplateHtml);
+    file_put_contents(__DIR__.'/var/tmp/staticrypt.html', $staticrypt);
+    file_put_contents(__DIR__.'/var/tmp/recovery-codes.html', $recoveryCodes);
+
     run(
         command: [
             __DIR__.'/node_modules/.bin/staticrypt',
+            '--template', __DIR__.'/var/tmp/staticrypt.html',
+            '--template-title', 'Recovery codes',
             '--config', 'false', // No need to store the salt, remember me is disabled
-            '--template-color-primary', '#2af598',
-            '--template-color-secondary', '#101820',
-            '--template-title', 'Secret Box',
-            '--template-instructions', $defaultPassword ? 'Try "pass"' : '', // Empty on purpose when real password
-            '--template-button', 'Open',
             '--remember', 'false', // Since data are sensitive, we don't want to remember the password
-            '-d', 'build',
             ...($defaultPassword ? ['--short'] : []),
-            'src/index.html',
+            '-d', 'dist/public',
+            __DIR__.'/var/tmp/recovery-codes.html',
         ],
         context: context()
             ->withEnvironment([
-                'STATICRYPT_PASSWORD' => $password,
+                'STATICRYPT_PASSWORD' => variable('PASSWORD'),
             ])
     );
 
     io()->success('Project built');
 
     if (!$noOpen) {
-        openBuild();
+        openDist();
     }
 }
 
-#[AsTask('open', description: 'Open the build in the browser')]
-function openBuild(): void
+#[AsTask(name: 'watch', description: 'Watch the project and rebuild on changes', aliases: ['watch'])]
+function watchAndBuild(): void
 {
-    open(__DIR__.'/build/index.html');
+    watch(__DIR__.'/src', function () {
+        build(true);
+    });
 }
 
-#[AsTask(description: 'Open the source in the browser')]
-function open_source(): void
+#[AsTask('open', description: 'Open the build in the browser', aliases: ['open'])]
+function openDist(): void
 {
-    if (!is_file(__DIR__.'/src/index.html')) {
-        throw new \RuntimeException('The source file does not exist yet. Please built the project first.');
+    open(__DIR__.'/dist/public/index.html');
+}
+
+#[AsTask(description: 'Open the tmp folder in the browser', aliases: ['open-tmp'])]
+function openTmp(): void
+{
+    open(__DIR__.'/var/tmp/index.html');
+}
+
+#[AsTask('open-cloudflare', description: 'Open the cloudflare build in the browser', aliases: ['open-cloudflare'])]
+function openCloudflare(): void
+{
+    if (variable('defaultPassword')) {
+        io()->warning('Using the default password. Set the PASSWORD environment variable to change it.');
     }
 
-    open(__DIR__.'/src/index.html');
+    run(
+        command: [
+            __DIR__.'/node_modules/.bin/wrangler',
+            'pages',
+            'dev',
+            'public',
+            '--binding', 'CFP_PASSWORD='.variable('CFP_PASSWORD'),
+            '--compatibility-date', '2024-11-26',
+        ],
+        context: context()
+            ->toInteractive()
+            ->withWorkingDirectory(__DIR__.'/dist')
+    );
+}
+
+#[AsTask(description: 'Deploy the project to Cloudflare', aliases: ['deploy'])]
+function deploy(): void
+{
+    if (variable('defaultPassword')) {
+        throw new \RuntimeException('You cannot deploy the project with the default password');
+    }
+
+    run(
+        command: vsprintf('echo %s | %s pages secret put --project-name %s CFP_PASSWORD', [
+            escapeshellarg(variable('CFP_PASSWORD')),
+            __DIR__.'/node_modules/.bin/wrangler',
+            escapeshellarg(variable('CFP_PROJECT_NAME')),
+        ]),
+        context: context()
+            ->withPty(false)
+            ->withTty(false)
+    );
+
+    run(
+        command: [
+            __DIR__.'/node_modules/.bin/wrangler',
+            'pages',
+            'deploy',
+            'public',
+            '--project-name', variable('CFP_PROJECT_NAME'),
+        ],
+        context: context()
+            ->toInteractive()
+            ->withWorkingDirectory(__DIR__.'/dist')
+    );
 }
 
 #[AsTask(description: 'Format the PHP code', aliases: ['cs'])]
@@ -205,6 +291,8 @@ function create_context(): Context
     $data = load_dot_env();
     $data['PASSWORD'] ?? throw new \RuntimeException('The PASSWORD environment variable is required');
     $data['defaultPassword'] = 'pass' === $data['PASSWORD'];
+    $data['CFP_PASSWORD'] ?? throw new \RuntimeException('The CFP_PASSWORD environment variable is required');
+    $data['defaultCfpPass'] = 'pass' === $data['CFP_PASSWORD'];
 
     return new Context($data);
 }

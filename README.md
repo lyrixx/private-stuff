@@ -15,13 +15,28 @@ while traveling the world. For now it contains:
 * It uses [staticrypt](https://github.com/robinmoisson/staticrypt) to crypt the
   HTML page with a password
 
-**The demo is deployed on github pages**:
+**The demo is partially deployed on github pages**:
 [https://lyrixx.github.io/private-stuff/](https://lyrixx.github.io/private-stuff/)
 
-Even if the page is encrypted, I don't want to deploy real data there. So I
-just put some dummy data.
+Even if the page is encrypted, I don't want to deploy real data there. So I just
+put some dummy data.
 
-The real page is deployed somewhere else 👀
+The real page is deployed somewhere else 👀 ... On cloudflare pages/worker
+
+### Integration with cloudflare workers
+
+Cloudflare allows to deploy static HTML, and also workers. Workers are a way to
+run some code at edge (on Cloudflare infrastructure). So I can deploy the HTML
+page and add another security layer at the HTTP level.
+
+I followed this [great
+post](https://dev.to/charca/password-protection-for-cloudflare-pages-8ma)  to
+setup the password protection.
+
+>[!NOTE]
+> This part is optional. If you don't want to use cloudflare, you can just use
+> the artifacts generated in `dist/public` and deploy them on any static
+> hosting.
 
 ## Requirements
 
@@ -30,11 +45,13 @@ The real page is deployed somewhere else 👀
 
 ## Usage
 
-1. copy `.env` to `.env.local` and set a really string password
+1. copy `.env` to `.env.local` and set a really strong password
 2. copy `data/websites.yaml.dist` to `data/websites.yaml` and fill it with your
    data
 3. run `castor build`
-4. deploy `build/index.html` somewhere
+4. deploy `dist/public/index.html` somewhere
+
+If you use cloudflare, you can deploy the `dist/` folder to a worker.
 
 ## License
 

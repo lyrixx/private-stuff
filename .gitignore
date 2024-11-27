@@ -1,7 +1,8 @@
+.wrangler/
 /.castor.stub.php
 /.castor/vendor/
 /.env.local
-/build/
 /data/websites.yaml
+/dist/
 /node_modules/
-/src/index.html
+/var/

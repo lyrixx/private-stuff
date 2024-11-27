@@ -1,0 +1,11 @@
+export function getTemplate({
+  redirectPath,
+  withError
+}: {
+  redirectPath: string;
+  withError: boolean;
+}): string {
+  return `
+    {{ include('cloudflare-template.html.twig') }}
+  `;
+}

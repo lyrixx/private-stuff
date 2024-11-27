@@ -1,0 +1,90 @@
+{% extends "base_login.html.twig" %}
+
+{#
+    Adaptation of https://github.com/robinmoisson/staticrypt/blob/main/lib/password_template.html
+#}
+
+{% block title %}/*[|template_title|]*/0{% endblock %}
+{% block subtitle %}This page is encrypted, and need a password to reveal it{% endblock %}
+
+{% block login %}
+    <div id="staticrypt_loading" class="staticrypt-spinner-container">
+        <div class="staticrypt-spinner"></div>
+    </div>
+
+    <div id="staticrypt_content">
+        <form class="form" method="post" action="#" id="staticrypt-form">
+            <p class="form-description">
+                To display the content, please enter your password
+                {% if default_password %}
+                    <br />Try <b>"pass"</b>
+                {% endif %}
+            </p>
+            <div class="input-wrapper">
+                <input type="password" class="form-input" id="staticrypt-password" placeholder="Password" required autofocus>
+                <button type="button" class="toggle-password" aria-label="Show password">👁️</button>
+            </div>
+            <div class="form-remember hidden" id="staticrypt-remember-label">
+                <input type="checkbox" id="staticrypt-remember" class="checkbox">
+                <label for="remember" class="checkbox-label">Remember Me</label>
+            </div>
+            <button type="submit" class="form-button">Open</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ parent()}}
+
+    <script>
+        // these variables will be filled when generating the file - the template format is '/*[|variable_name|]*/0'
+        const staticryptInitiator = /*[|js_staticrypt|]*/ 0;
+        const templateError = "/*[|template_error|]*/0",
+            isRememberEnabled = /*[|is_remember_enabled|]*/ 0,
+            staticryptConfig = /*[|staticrypt_config|]*/ 0;
+
+        // you can edit these values to customize some of the behavior of StatiCrypt
+        const templateConfig = {
+            rememberExpirationKey: "staticrypt_expiration",
+            rememberPassphraseKey: "staticrypt_passphrase",
+            replaceHtmlCallback: null,
+            clearLocalStorageCallback: null,
+        };
+
+        // init the staticrypt engine
+        const staticrypt = staticryptInitiator.init(staticryptConfig, templateConfig);
+
+        // try to automatically decrypt on load if there is a saved password
+        window.onload = async function () {
+            const { isSuccessful } = await staticrypt.handleDecryptOnLoad();
+
+            // if we didn't decrypt anything on load, show the password prompt. Otherwise the content has already been
+            // replaced, no need to do anything
+            if (!isSuccessful) {
+                // hide loading screen
+                document.getElementById("staticrypt_loading").classList.add("hidden");
+                document.getElementById("staticrypt_content").classList.remove("hidden");
+                document.getElementById("staticrypt-password").focus();
+
+                // show the remember me checkbox
+                if (isRememberEnabled) {
+                    document.getElementById("staticrypt-remember-label").classList.remove("hidden");
+                }
+            }
+        };
+
+        // handle password form submission
+        document.getElementById("staticrypt-form").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const password = document.getElementById("staticrypt-password").value,
+                isRememberChecked = document.getElementById("staticrypt-remember").checked;
+
+            const { isSuccessful } = await staticrypt.handleDecryptionOfPage(password, isRememberChecked);
+
+            if (!isSuccessful) {
+                alert(templateError);
+            }
+        });
+    </script>
+{% endblock %}

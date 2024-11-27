@@ -10,7 +10,7 @@
         </p>
         ${withError ? `<div class="form-error" id="password-error">Incorrect password, please try again.</div>` : ''}
         <div class="input-wrapper">
-            <input type="password" name="password" class="form-input" placeholder="Password" required autofocus>
+            <input type="password" name="password" id="staticrypt-password" class="form-input" placeholder="Password" required autofocus>
             <button type="button" class="toggle-password" aria-label="Show password">👁️</button>
         </div>
         <input type="hidden" name="redirect" value="${redirectPath}" />

@@ -47,7 +47,7 @@ function build(bool $noOpen = false): void
     fs()->mirror(__DIR__.'/src/cloudflare-functions', __DIR__.'/dist/functions');
 
     $recoveryCodes = __DIR__.'/data/recovery_codes.yaml';
-    if (!is_file($recoveryCodes)) {
+    if (!is_file($recoveryCodes) || variable('TEST')) {
         io()->warning('No websites data found, using the default one');
         $recoveryCodes = __DIR__.'/data/recovery_codes.yaml.dist';
     }
@@ -259,9 +259,16 @@ function decrypt(string $directory): void
 function create_context(): Context
 {
     $data = load_dot_env();
+
+    $data['TEST'] ??= false;
+    if ($data['TEST']) {
+        $data['PASSWORD'] = 'pass';
+        $data['CFP_PASSWORD'] = 'pass';
+    }
+
     $data['PASSWORD'] ?? throw new \RuntimeException('The PASSWORD environment variable is required');
-    $data['defaultPassword'] = 'pass' === $data['PASSWORD'];
     $data['CFP_PASSWORD'] ?? throw new \RuntimeException('The CFP_PASSWORD environment variable is required');
+    $data['defaultPassword'] = 'pass' === $data['PASSWORD'];
     $data['defaultCfpPassword'] = 'pass' === $data['CFP_PASSWORD'];
 
     return new Context($data);

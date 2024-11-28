@@ -36,7 +36,7 @@ function build(bool $noOpen = false): void
 
     io()->title('Building the project');
 
-    if (variable('defaultPassword')) {
+    if (!variable('TEST') && variable('defaultPassword')) {
         io()->warning('Using the default password. Set the PASSWORD environment variable to change it, or use a `.env.local` file.');
     }
 
@@ -46,20 +46,17 @@ function build(bool $noOpen = false): void
     fs()->mkdir(__DIR__.'/var/tmp');
     fs()->mirror(__DIR__.'/src/cloudflare-functions', __DIR__.'/dist/functions');
 
-    $recoveryCodesFilename = __DIR__.'/data/recovery_codes.yaml';
-    if (!is_file($recoveryCodesFilename) || variable('TEST')) {
-        io()->warning('No websites data found, using the default one');
-        $recoveryCodesFilename = __DIR__.'/data/recovery_codes.yaml.dist';
-    }
-
     $files = get_files();
     fs()->mirror(__DIR__.'/data/files', __DIR__.'/dist/public/files');
 
     $twig = build_twig();
 
-    $index = $twig->render('index.html.twig');
+    $index = $twig->render('index.html.twig', [
+        'emergency_contacts' => yaml_parse(get_config_file('emergency_contacts')),
+        'administrative_contacts' => yaml_parse(get_config_file('administrative_contacts')),
+    ]);
     $recoveryCodes = $twig->render('recovery-codes.html.twig', [
-        'recovery_codes' => yaml_parse(file_get_contents($recoveryCodesFilename)),
+        'recovery_codes' => yaml_parse(get_config_file('recovery_codes')),
     ]);
     $staticrypt = $twig->render('staticrypt.html.twig');
     $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
@@ -275,6 +272,7 @@ function create_context(): Context
 
     $data['PASSWORD'] ?? throw new \RuntimeException('The PASSWORD environment variable is required');
     $data['CFP_PASSWORD'] ?? throw new \RuntimeException('The CFP_PASSWORD environment variable is required');
+
     $data['defaultPassword'] = 'pass' === $data['PASSWORD'];
     $data['defaultCfpPassword'] = 'pass' === $data['CFP_PASSWORD'];
 
@@ -320,6 +318,23 @@ function staticrypt(string $title, string $filename): void
                 'STATICRYPT_PASSWORD' => variable('PASSWORD'),
             ])
     );
+}
+
+function get_config_file(string $filename): string
+{
+    $path = __DIR__."/data/{$filename}.yaml";
+
+    if (variable('TEST')) {
+        io()->warning("Test mode enabled, using the default data for \"{$filename}\".");
+        $path = __DIR__."/data/{$filename}.yaml.dist";
+    } elseif (!is_file($path)) {
+        io()->warning("File \"{$filename}\" was not found, using the default one.");
+        $path = __DIR__."/data/{$filename}.yaml.dist";
+    } elseif (!is_file($path)) {
+        throw new \RuntimeException("The file {$filename} does not exist");
+    }
+
+    return file_get_contents($path);
 }
 
 function get_files(): array

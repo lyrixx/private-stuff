@@ -2,16 +2,55 @@
 
 {% extends "base.html.twig" %}
 
-{% block title %}Private stuff{% endblock %}
-{% block subtitle %}Find bellow all your private stuff{% endblock %}
+{% block title %}Private Stuff{% endblock %}
+{% block subtitle %}All the most important information in case of emergency{% endblock %}
 
 {% block container %}
+    <div class="panel-section">
+        <h2 class="panel-title">Useful Informations</h2>
+
+        <div class="card-block card-no-hover">
+            <div class="card-content">
+                <h3 class="card-title">🫂 Emergency contacts</h3>
+                <div class="emergency-contacts">
+                    <ul class="contact-list">
+                        {% for contact in emergency_contacts %}
+                            <li class="contact-item">
+                                <span class="contact-name">{{ contact.name }}</span> -
+                                <a href="tel:{{ contact.phone }}" class="contact-phone">☎ {{ contact.phone }}</a> -
+                                <a href="mailto:{{ contact.email }}" class="contact-email">📧 {{ contact.email }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-block card-no-hover">
+            <div class="card-content">
+                <h3 class="card-title">🏦 Administrative contact</h3>
+                <div class="emergency-contacts">
+                    <ul class="contact-list">
+                        {% for contact in administrative_contacts %}
+                            <li class="contact-item">
+                                <span class="contact-name">{{ contact.name }}</span> -
+                                <span class="contact-id" title="account number">{{ contact.account_id }}</span> -
+                                <a href="tel:{{ contact.phone }}" class="contact-phone">☎ {{ contact.phone }}</a> -
+                                <a href="mailto:{{ contact.email }}" class="contact-email">📧 {{ contact.email }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="panel-section">
         <h2 class="panel-title">Useful Links</h2>
 
         <a href="./files.html" class="card-block" rel="noopener noreferrer">
             <div class="card-content">
-                <p class="card-title">List of files</p>
+                <h3 class="card-title">📂 List of files</h3>
                 <p class="card-description">
                     Some important files
                 </p>
@@ -20,9 +59,9 @@
 
         <a href="./recovery-codes.html" class="card-block" rel="noopener noreferrer">
             <div class="card-content">
-                <p class="card-title">Recovery codes</p>
+                <h3 class="card-title">🔑 Recovery codes</h3>
                 <p class="card-description">
-                    Find all recovery codes for my accounts.
+                    Some recovery codes
                     <br />
                     <small>(Authentication required)</small>
                 </p>

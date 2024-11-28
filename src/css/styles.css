@@ -147,7 +147,7 @@ h1 {
     margin-bottom: var(--spacing-medium);
 }
 
-.card-block:hover {
+.card-block:hover:not(.card-no-hover) {
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     background: var(--color-primary-dark);
@@ -406,6 +406,42 @@ h1 {
 
 .hidden {
     display: none !important;
+}
+
+.emergency-contacts {
+    margin-top: var(--spacing-medium);
+}
+
+.contact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.contact-item {
+    margin-bottom: var(--spacing-small);
+    font-size: var(--font-size-medium);
+    color: var(--color-text-secondary);
+}
+
+.contact-item a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.contact-item a:hover {
+    color: var(--color-primary-light);
+}
+
+.contact-name {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.contact-id {
+    font-weight: bold;
+    color: var(--color-primary);
 }
 
 @media (max-width: 640px) {

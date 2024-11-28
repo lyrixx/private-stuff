@@ -1,0 +1,9 @@
+- name: Bank
+  account_id: 123456
+  phone: +1234567890
+  email: bank@example.com
+
+- name: Insurance
+  account_id: 123456
+  phone: +9876543210
+  email: insurance@example.com

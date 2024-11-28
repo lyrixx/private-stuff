@@ -1,0 +1,7 @@
+- name: John Doe
+  phone: +1234567890
+  email: johndoe@example.com
+
+- name: Jane Smith
+  phone: +9876543210
+  email: janesmith@example.com

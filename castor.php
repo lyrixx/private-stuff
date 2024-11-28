@@ -90,7 +90,7 @@ function build(bool $noOpen = false): void
 #[AsTask(name: 'watch', description: 'Watch the project and rebuild on changes', aliases: ['watch'])]
 function watchAndBuild(): void
 {
-    watch(__DIR__.'/src', function () {
+    watch(__DIR__.'/src/...', function () {
         build(true);
     });
 }

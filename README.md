@@ -8,12 +8,13 @@ The website contains some private information I may need if I lost my phone
 while traveling the world. For now it contains:
 
 * My 2FA recovery codes
+* Some documents (Passport, Driver license, etc)
 
 ## How it works?
 
 * It uses [castor](https://castor.jolicode.com/) as a build tool
   * with some PHP tools, like twig to render the HTML
-* It uses [staticrypt](https://github.com/robinmoisson/staticrypt) to crypt the
+* It uses [staticrypt](https://github.com/robinmoisson/staticrypt) to encrypt the
   HTML page with a password
 
 **The demo is partially deployed on github pages**:
@@ -22,7 +23,8 @@ while traveling the world. For now it contains:
 Even if the page is encrypted, I don't want to deploy real data there. So I just
 put some dummy data.
 
-The real page is deployed somewhere else 👀 ... On cloudflare pages/worker
+The real page is deployed somewhere else 👀 ... On cloudflare pages/worker, with
+another password protection.
 
 ### Integration with cloudflare workers
 

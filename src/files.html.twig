@@ -4,22 +4,20 @@
 {% block subtitle %}Find bellow all your files{% endblock %}
 
 {% block container %}
-    <div class="site-section">
-        <div class="site-section">
-            <h2 class="site-title">File List</h2>
-            <ul class="file-list">
-                {% for file in files %}
-                    <li class="file-item">
-                        <a download href="./files/{{ file.path }}">
-                            {{ file.emoji }}
-                            {{ file.name|title }}
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="file-item">No files found</li>
-                {% endfor %}
-            </ul>
-        </div>
+    <div class="panel-section">
+        <h2 class="panel-title">File List</h2>
+        <ul class="file-list">
+            {% for file in files %}
+                <li class="file-item">
+                    <a download href="./files/{{ file.path }}">
+                        {{ file.emoji }}
+                        {{ file.name|title }}
+                    </a>
+                </li>
+            {% else %}
+                <li class="file-item">No files found</li>
+            {% endfor %}
+        </ul>
     </div>
 {% endblock %}
 

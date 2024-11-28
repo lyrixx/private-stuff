@@ -7,7 +7,6 @@
 /*! modern-normalize v3.0.1 | MIT License | https://github.com/sindresorhus/modern-normalize */
 *,::after,::before{box-sizing:border-box}html{font-family:system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif,'Apple Color Emoji','Segoe UI Emoji';line-height:1.15;-webkit-text-size-adjust:100%;tab-size:4}body{margin:0}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{border-color:currentcolor}button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;line-height:1.15;margin:0}[type=button],[type=reset],[type=submit],button{-webkit-appearance:button}legend{padding:0}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}
 
-
 /* My CSS */
 
 :root {
@@ -100,7 +99,7 @@ h1 {
     font-size: 0.95rem;
 }
 
-.site-section {
+.panel-section {
     background: var(--color-surface);
     border-radius: var(--radius-large);
     padding: var(--spacing-large);
@@ -110,11 +109,11 @@ h1 {
     border: 1px solid var(--color-border);
 }
 
-.site-section:hover {
+.panel-section:hover {
     transform: translateY(-1px);
 }
 
-.site-title {
+.panel-title {
     display: flex;
     align-items: center;
     font-size: var(--font-size-large);
@@ -124,7 +123,7 @@ h1 {
     border-bottom: 2px solid var(--color-border);
 }
 
-.site-title::before {
+.panel-title::before {
     content: '';
     display: inline-block;
     width: 6px;
@@ -132,6 +131,39 @@ h1 {
     background: var(--color-primary);
     border-radius: var(--radius-small);
     margin-right: var(--spacing-small);
+}
+
+.card-block {
+    display: block;
+    background: var(--color-surface);
+    border-radius: var(--radius-large);
+    padding: var(--spacing-medium);
+    text-align: center;
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    margin-bottom: var(--spacing-medium);
+}
+
+.card-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: var(--color-primary-dark);
+    color: var(--color-text); /* Ensure text remains readable */
+}
+
+.card-title {
+    font-size: var(--font-size-medium);
+    font-weight: 600;
+    color: inherit; /* Inherits from the link-block for hover effects */
+    margin-bottom: var(--spacing-small);
+}
+
+.card-description {
+    font-size: var(--font-size-small);
+    color: inherit; /* Inherits from the link-block for hover effects */
 }
 
 .account {
@@ -206,38 +238,6 @@ h1 {
 
 .code:hover::after {
     opacity: 1;
-}
-.link-block {
-    display: block;
-    background: var(--color-surface);
-    border-radius: var(--radius-large);
-    padding: var(--spacing-medium);
-    text-align: center;
-    box-shadow: var(--shadow-light);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    text-decoration: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    margin-bottom: var(--spacing-medium);
-}
-
-.link-block:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    background: var(--color-primary-dark);
-    color: var(--color-text); /* Ensure text remains readable */
-}
-
-.link-title {
-    font-size: var(--font-size-medium);
-    font-weight: 600;
-    color: inherit; /* Inherits from the link-block for hover effects */
-    margin-bottom: var(--spacing-small);
-}
-
-.link-description {
-    font-size: var(--font-size-small);
-    color: inherit; /* Inherits from the link-block for hover effects */
 }
 
 .form {
@@ -413,7 +413,7 @@ h1 {
         padding: var(--spacing-medium) var(--spacing-small);
     }
 
-    .site-section {
+    .panel-section {
         padding: var(--spacing-medium);
     }
 

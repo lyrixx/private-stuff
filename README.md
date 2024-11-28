@@ -9,6 +9,8 @@ while traveling the world. For now it contains:
 
 * My 2FA recovery codes
 * Some documents (Passport, Driver license, etc)
+* Emergency contacts
+* Administrative contacts (Bank, Insurance, etc)
 
 ## How it works?
 
@@ -49,10 +51,12 @@ setup the password protection.
 ## Usage
 
 1. copy `.env` to `.env.local` and set a really strong password
-2. copy `data/websites.yaml.dist` to `data/websites.yaml` and fill it with your
+1. copy `data/websites.yaml.dist` to `data/websites.yaml` and fill it with your
    data
-3. run `castor build`
-4. deploy `dist/public/index.html` somewhere
+1. do the same with `data/administrative_contacts.yaml.dist` and
+   `emergency_contacts.yaml.dist`
+1. run `castor build`
+1. deploy `dist/public/index.html` somewhere
 
     >[!NOTE]
     > If plan to use cloudflare, just use `castor deploy`

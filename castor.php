@@ -52,6 +52,9 @@ function build(bool $noOpen = false): void
         $recoveryCodesFilename = __DIR__.'/data/recovery_codes.yaml.dist';
     }
 
+    $files = get_files();
+    fs()->mirror(__DIR__.'/data/files', __DIR__.'/dist/public/files');
+
     $twig = build_twig();
 
     $index = $twig->render('index.html.twig');
@@ -61,14 +64,19 @@ function build(bool $noOpen = false): void
     $staticrypt = $twig->render('staticrypt.html.twig');
     $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
     $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig');
+    $files = $twig->render('files.html.twig', [
+        'files' => $files,
+    ]);
 
     file_put_contents(__DIR__.'/dist/public/index.html', $index);
+    file_put_contents(__DIR__.'/dist/public/files.html', $files);
     file_put_contents(__DIR__.'/dist/functions/template.ts', $cloudflareTemplateJs);
     // Some files are put in tmp/ directory only for debug purpose
-    file_put_contents(__DIR__.'/var/tmp/index.html', $index);
     file_put_contents(__DIR__.'/var/tmp/cloudflare-template.html', $cloudflareTemplateHtml);
-    file_put_contents(__DIR__.'/var/tmp/staticrypt.html', $staticrypt);
+    file_put_contents(__DIR__.'/var/tmp/files.html', $files);
+    file_put_contents(__DIR__.'/var/tmp/index.html', $index);
     file_put_contents(__DIR__.'/var/tmp/recovery-codes.html', $recoveryCodes);
+    file_put_contents(__DIR__.'/var/tmp/staticrypt.html', $staticrypt);
 
     staticrypt('Recovery codes', 'recovery-codes.html');
 
@@ -312,4 +320,52 @@ function staticrypt(string $title, string $filename): void
                 'STATICRYPT_PASSWORD' => variable('PASSWORD'),
             ])
     );
+}
+
+function get_files(): array
+{
+    $files = finder()
+        ->in(__DIR__.'/data/files')
+        ->files()
+    ;
+
+    $result = [];
+    foreach ($files as $file) {
+        $result[] = [
+            'path' => $file->getFilename(),
+            'emoji' => get_emoji_for_file_extension($e = $file->getExtension()),
+            'name' => $file->getBasename(".{$e}"),
+        ];
+    }
+
+    return $result;
+}
+
+function get_emoji_for_file_extension(string $extension): string
+{
+    return match (strtolower($extension)) {
+        'pdf' => '📄',
+        'doc' => '📝',
+        'docx' => '📝',
+        'xls' => '📊',
+        'xlsx' => '📊',
+        'ppt' => '📽️',
+        'pptx' => '📽️',
+        'jpg' => '🖼️',
+        'jpeg' => '🖼️',
+        'png' => '🖼️',
+        'gif' => '🎭',
+        'mp3' => '🎵',
+        'wav' => '🎵',
+        'mp4' => '🎬',
+        'avi' => '🎬',
+        'zip' => '🗜️',
+        'rar' => '🗜️',
+        'txt' => '📄',
+        'php' => '🐘',
+        'html' => '🌐',
+        'css' => '🎨',
+        'js' => '⚡',
+        default => '📁',
+    };
 }

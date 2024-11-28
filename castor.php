@@ -347,9 +347,9 @@ function get_files(): array
     $result = [];
     foreach ($files as $file) {
         $result[] = [
-            'path' => $file->getFilename(),
+            'path' => $file->getRelativePathname(),
             'emoji' => get_emoji_for_file_extension($e = $file->getExtension()),
-            'name' => $file->getBasename(".{$e}"),
+            'name' => humanize($file->getBasename(".{$e}")),
         ];
     }
 
@@ -381,6 +381,12 @@ function get_emoji_for_file_extension(string $extension): string
         'html' => '🌐',
         'css' => '🎨',
         'js' => '⚡',
-        default => '📁',
+        default => '📰',
     };
+}
+
+
+function humanize(string $text): string
+{
+    return ucfirst(strtolower(trim(preg_replace(['/([A-Z])/', '/[_\s]+/'], ['_$1', ' '], $text))));
 }

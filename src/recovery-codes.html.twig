@@ -4,6 +4,12 @@
 {% block subtitle %}Find bellow all your 2FA recovery codes</{% endblock %}
 
 {% block container %}
+    {% if test %}
+        <div class="panel-section">
+            You can see this page, only because the site has been deploy in test mode
+        </div>
+    {% endif %}
+
     {% for website in recovery_codes %}
         <div class="panel-section">
             <h2 class="panel-title">{{ website.name}}</h2>

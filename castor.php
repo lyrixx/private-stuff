@@ -15,13 +15,16 @@ use function Castor\check;
 use function Castor\context;
 use function Castor\finder;
 use function Castor\fs;
+use function Castor\import;
 use function Castor\io;
 use function Castor\load_dot_env;
-use function Castor\open;
+use function Castor\open as do_open;
 use function Castor\run;
 use function Castor\variable;
 use function Castor\watch;
 use function Castor\yaml_parse;
+
+import(__DIR__ . '/.castor');
 
 #[AsTask(description: 'Install the dependencies')]
 function install(): void
@@ -34,7 +37,7 @@ function install(): void
 #[AsTask(description: 'Build the project', aliases: ['build'])]
 function build(bool $noOpen = false): void
 {
-    if (!is_dir(__DIR__.'/node_modules')) {
+    if (!is_dir(__DIR__ . '/node_modules')) {
         install();
     }
 
@@ -44,14 +47,14 @@ function build(bool $noOpen = false): void
         io()->warning('Using the default password. Set the PASSWORD environment variable to change it, or use a `.env.local` file.');
     }
 
-    fs()->remove(__DIR__.'/dist');
-    fs()->mkdir(__DIR__.'/dist/public');
-    fs()->remove(__DIR__.'/var/tmp');
-    fs()->mkdir(__DIR__.'/var/tmp');
-    fs()->mirror(__DIR__.'/src/cloudflare-functions', __DIR__.'/dist/functions');
+    fs()->remove(__DIR__ . '/dist');
+    fs()->mkdir(__DIR__ . '/dist/public');
+    fs()->remove(__DIR__ . '/var/tmp');
+    fs()->mkdir(__DIR__ . '/var/tmp');
+    fs()->mirror(__DIR__ . '/src/cloudflare-functions', __DIR__ . '/dist/functions');
 
     $filesDirectory = variable('FILES_DIRECTORY');
-    fs()->mirror($filesDirectory, __DIR__.'/dist/public/files');
+    fs()->mirror($filesDirectory, __DIR__ . '/dist/public/upload');
     $files = get_files($filesDirectory);
 
     $twig = build_twig();
@@ -66,105 +69,150 @@ function build(bool $noOpen = false): void
     $files = $twig->render('files.html.twig', [
         'files' => $files,
     ]);
-    $staticrypt = $twig->render('staticrypt.html.twig');
     $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
-    $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig');
     $manifest = $twig->render('manifest.json.twig');
     $serviceWorker = $twig->render('service-worker.js.twig');
+    $staticrypt = $twig->render('staticrypt.html.twig');
 
-    file_put_contents(__DIR__.'/dist/public/index.html', $index);
-    file_put_contents(__DIR__.'/dist/public/files.html', $files);
-    file_put_contents(__DIR__.'/dist/public/manifest.json', $manifest);
-    file_put_contents(__DIR__.'/dist/public/service-worker.js', $serviceWorker);
-    file_put_contents(__DIR__.'/dist/functions/template.ts', $cloudflareTemplateJs);
-    // Some files are put in tmp/ directory only for debug purpose
-    file_put_contents(__DIR__.'/var/tmp/cloudflare-template.html', $cloudflareTemplateHtml);
-    file_put_contents(__DIR__.'/var/tmp/files.html', $files);
-    file_put_contents(__DIR__.'/var/tmp/index.html', $index);
-    file_put_contents(__DIR__.'/var/tmp/manifest.json', $manifest);
-    file_put_contents(__DIR__.'/var/tmp/recovery-codes.html', $recoveryCodes);
-    file_put_contents(__DIR__.'/var/tmp/service-worker.js', $serviceWorker);
-    file_put_contents(__DIR__.'/var/tmp/staticrypt.html', $staticrypt);
+    file_put_contents(__DIR__ . '/dist/public/index.html', $index);
+    file_put_contents(__DIR__ . '/dist/public/files.html', $files);
+    file_put_contents(__DIR__ . '/dist/public/manifest.json', $manifest);
+    file_put_contents(__DIR__ . '/dist/public/service-worker.js', $serviceWorker);
+    file_put_contents(__DIR__ . '/dist/functions/template.ts', $cloudflareTemplateJs);
+    if ('test' === variable('APP_ENV')) {
+        file_put_contents(__DIR__ . '/dist/public/recovery-codes-decoded.html', $recoveryCodes);
+    }
+    // Encrypted files are stored in tmp folder
+    file_put_contents(__DIR__ . '/var/tmp/recovery-codes.html', $recoveryCodes);
+    file_put_contents(__DIR__ . '/var/tmp/staticrypt.html', $staticrypt);
 
     staticrypt('Recovery codes', 'recovery-codes.html');
 
-    io()->success('Project built');
+    io()->success('Project built successfully');
 
     if (!$noOpen) {
-        openDist();
+        open();
     }
 }
 
 #[AsTask(name: 'watch', description: 'Watch the project and rebuild on changes', aliases: ['watch'])]
 function watchAndBuild(): void
 {
-    watch(__DIR__.'/src/...', function () {
+    watch(__DIR__ . '/src/...', function () {
         build(true);
     });
 }
 
-#[AsTask('open', description: 'Open the build in the browser', aliases: ['open'])]
-function openDist(bool $https = false): void
+#[AsTask(description: 'Start the web server', aliases: ['start'])]
+function start(): void
 {
-    if ($https) {
-        check(
-            'Mkcert is installed',
-            'Mkcert is required to use HTTPS',
-            fn () => (new ExecutableFinder())->find('mkcert'),
-        );
-
-        try {
-            check(
-                'Certificates exists',
-                'Certificates does not exist',
-                fn () => is_file(__DIR__.'/var/certs/private-stuff.test.pem'),
-            );
-        } catch (ProblemException) {
-            fs()->mkdir(__DIR__.'/var/certs');
-            check(
-                'Generate certificates',
-                'Could not generate the certificates',
-                fn () => run(
-                    command: [
-                        'mkcert',
-                        'private-stuff.test',
-                    ],
-                    context: context()
-                        ->withWorkingDirectory(__DIR__.'/var/certs')
-                        ->withQuiet(true)
-                ),
-            );
-        }
-
-        io()->comment('Starting the server with HTTPS on ');
-        io()->comment('https://private-stuff.test:9999/');
-
-        $server = <<<'SHELL'
-            docker run --rm -p 9999:443 -v `pwd`/var/certs:/etc/certs:ro  -v `pwd`/dist/public:/srv:ro $(
-                docker build --quiet -<<-EOD
-                    FROM caddy:latest
-                    COPY <<-EOF /etc/caddy/Caddyfile
-                        :443 {
-                            tls /etc/certs/private-stuff.test.pem /etc/certs/private-stuff.test-key.pem
-                            root * /srv
-                            file_server
-                        }
-            EOF
-            EOD
-            )
-            SHELL;
-
-        run($server);
+    if (is_server_running()) {
+        io()->warning('The server is already running');
 
         return;
     }
-    open(__DIR__.'/dist/public/index.html');
+
+    io()->comment('Starting the server... ');
+
+    check(
+        'Mkcert is installed',
+        'Mkcert is required to use HTTPS',
+        fn () => (new ExecutableFinder())->find('mkcert'),
+    );
+
+    try {
+        check(
+            'Certificates exists',
+            'Certificates does not exist',
+            fn () => is_file(__DIR__ . '/var/certs/private-stuff.test.pem'),
+        );
+    } catch (ProblemException) {
+        fs()->mkdir(__DIR__ . '/var/certs');
+        check(
+            'Generate certificates',
+            'Could not generate the certificates',
+            fn () => run(
+                command: [
+                    'mkcert',
+                    'private-stuff.test',
+                ],
+                context: context()
+                    ->withWorkingDirectory(__DIR__ . '/var/certs')
+                    ->withQuiet(true)
+            ),
+        );
+    }
+
+    $server = <<<'SHELL'
+        docker run --rm --name private-stuff -d -p 9999:443 -v `pwd`:/app:ro $(
+            docker build --quiet -<<-EOD
+                FROM caddy:2.9-alpine
+                COPY <<-EOF /etc/caddy/Caddyfile
+                    :443 {
+                        tls /app/var/certs/private-stuff.test.pem /app/var/certs/private-stuff.test-key.pem
+                        root * /app/dist/public
+                        try_files {path}.html
+                        file_server
+                    }
+        EOF
+        EOD
+        )
+        SHELL;
+
+    run($server);
+
+    io()->comment('Listening on https://private-stuff.test:9999/');
+    open();
+
+    io()->success('Server started');
 }
 
-#[AsTask(description: 'Open the tmp folder in the browser', aliases: ['open-tmp'])]
-function openTmp(): void
+#[AsTask(description: 'Start the web server', aliases: ['stop'])]
+function stop(): void
 {
-    open(__DIR__.'/var/tmp/index.html');
+    if (!is_server_running()) {
+        io()->warning('The server is not running');
+
+        return;
+    }
+
+    run(['docker', 'stop', 'private-stuff']);
+
+    io()->success('Server stopped');
+}
+
+#[AsTask(description: 'Open website in favorite browser', aliases: ['open'])]
+function open(): void
+{
+    if (!is_server_running()) {
+        start();
+
+        return;
+    }
+
+    do_open('https://private-stuff.test:9999/');
+}
+
+function is_server_running(): bool
+{
+    $process = run(
+        command: [
+            'docker',
+            'container',
+            'inspect',
+            '-f', '{{.State.Running}}',
+            'private-stuff',
+        ],
+        context: context()
+            ->withAllowFailure(true)
+            ->withQuiet()
+    );
+
+    if (!$process->isSuccessful()) {
+        return false;
+    }
+
+    return 'true' === trim($process->getOutput());
 }
 
 #[AsTask('open-cloudflare', description: 'Open the cloudflare build in the browser', aliases: ['open-cloudflare'])]
@@ -179,16 +227,16 @@ function openCloudflare(): void
 
     run(
         command: [
-            __DIR__.'/node_modules/.bin/wrangler',
+            __DIR__ . '/node_modules/.bin/wrangler',
             'pages',
             'dev',
             'public',
-            '--binding', 'CFP_PASSWORD='.variable('CFP_PASSWORD'),
+            '--binding', 'CFP_PASSWORD=' . variable('CFP_PASSWORD'),
             '--compatibility-date', '2024-11-26',
         ],
         context: context()
             ->toInteractive()
-            ->withWorkingDirectory(__DIR__.'/dist')
+            ->withWorkingDirectory(__DIR__ . '/dist')
     );
 }
 
@@ -202,7 +250,7 @@ function deploy(): void
     run(
         command: vsprintf('echo %s | %s pages secret put --project-name %s CFP_PASSWORD', [
             escapeshellarg(variable('CFP_PASSWORD')),
-            __DIR__.'/node_modules/.bin/wrangler',
+            __DIR__ . '/node_modules/.bin/wrangler',
             escapeshellarg(variable('CFP_PROJECT_NAME')),
         ]),
         context: context()
@@ -212,7 +260,7 @@ function deploy(): void
 
     run(
         command: [
-            __DIR__.'/node_modules/.bin/wrangler',
+            __DIR__ . '/node_modules/.bin/wrangler',
             'pages',
             'deploy',
             'public',
@@ -220,106 +268,8 @@ function deploy(): void
         ],
         context: context()
             ->toInteractive()
-            ->withWorkingDirectory(__DIR__.'/dist')
+            ->withWorkingDirectory(__DIR__ . '/dist')
     );
-}
-
-#[AsTask(description: 'Format the PHP code', aliases: ['cs'])]
-function php_cs(): void
-{
-    run(['php-cs-fixer', 'fix', 'castor.php', '--rules=@PhpCsFixer']);
-}
-
-#[AsTask(description: 'Encrypt a directory', aliases: ['encrypt'])]
-function encrypt(string $directory): void
-{
-    if (!is_dir($directory)) {
-        throw new \RuntimeException('The directory does not exist');
-    }
-
-    if (variable('defaultPassword')) {
-        throw new \RuntimeException('You cannot encrypt data with the default password');
-    }
-
-    $password = variable('PASSWORD');
-    if (strlen($password) < 14) {
-        throw new \RuntimeException('The password must be at least 14 characters long.');
-    }
-
-    $salt = random_bytes(SODIUM_CRYPTO_PWHASH_SALTBYTES);
-    $key = sodium_crypto_pwhash(
-        SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
-        $password,
-        $salt,
-        SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
-        SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
-    );
-    $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-
-    $files = finder()
-        ->in($directory)
-        ->files()
-    ;
-    foreach ($files as $file) {
-        $content = file_get_contents($file);
-        $encrypted = sodium_crypto_secretbox($content, $nonce, $key);
-        $encryptedData = $salt.$nonce.$encrypted;
-        $encoded = base64_encode($encryptedData);
-        file_put_contents($file, $encoded);
-        sodium_memzero($content);
-    }
-
-    sodium_memzero($password);
-    sodium_memzero($key);
-}
-
-#[AsTask(description: 'Decrypt a directory', aliases: ['decrypt'])]
-function decrypt(string $directory): void
-{
-    if (!is_dir($directory)) {
-        throw new \RuntimeException('The directory does not exist.');
-    }
-
-    $files = finder()
-        ->in($directory)
-        ->files()
-    ;
-
-    $password = variable('PASSWORD');
-
-    foreach ($files as $file) {
-        $encryptedData = file_get_contents($file);
-        $decoded = base64_decode($encryptedData);
-        $salt = substr($decoded, 0, SODIUM_CRYPTO_PWHASH_SALTBYTES);
-        if (SODIUM_CRYPTO_PWHASH_SALTBYTES !== strlen($salt)) {
-            throw new \RuntimeException(sprintf('Failed to decrypt the file "%s". Impossible to extract salt.', $file));
-        }
-        $nonce = substr($decoded, SODIUM_CRYPTO_PWHASH_SALTBYTES, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-        if (SODIUM_CRYPTO_SECRETBOX_NONCEBYTES !== strlen($nonce)) {
-            throw new \RuntimeException(sprintf('Failed to decrypt the file "%s". Impossible to extract nonce', $file));
-        }
-        $cipherText = substr($decoded, SODIUM_CRYPTO_PWHASH_SALTBYTES + SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-
-        $key = sodium_crypto_pwhash(
-            SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
-            $password,
-            $salt,
-            SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
-            SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
-        );
-
-        $decrypted = sodium_crypto_secretbox_open($cipherText, $nonce, $key);
-
-        if (false === $decrypted) {
-            throw new \RuntimeException(sprintf('Failed to decrypt the file "%s".', $file));
-        }
-
-        file_put_contents($file, $decrypted);
-        sodium_memzero($decrypted);
-        sodium_memzero($key);
-    }
-
-    sodium_memzero($password);
 }
 
 #[AsContext()]
@@ -330,7 +280,7 @@ function create_context(): Context
     if ('test' === $data['APP_ENV']) {
         $data['PASSWORD'] = 'pass';
         $data['CFP_PASSWORD'] = 'pass';
-        $data['FILES_DIRECTORY'] = __DIR__.'/data';
+        $data['FILES_DIRECTORY'] = __DIR__ . '/data';
     }
 
     $data['PASSWORD'] ?? throw new \RuntimeException('The "PASSWORD" environment variable is required.');
@@ -351,7 +301,7 @@ function build_twig(): Environment
 {
     $twig = new Environment(
         new FilesystemLoader([
-            __DIR__.'/src',
+            __DIR__ . '/src',
         ]),
         [
             'debug' => true,
@@ -360,10 +310,11 @@ function build_twig(): Environment
     );
     // Hack to make the watch function works, we want to invalide the cache every time!
     $r = new \ReflectionProperty($twig, 'optionsHash');
-    $r->setValue($twig, $r->getValue($twig).bin2hex(random_bytes(32)));
+    $r->setValue($twig, $r->getValue($twig) . bin2hex(random_bytes(32)));
 
     $twig->addGlobal('default_password', variable('defaultPassword'));
     $twig->addGlobal('default_cfp_password', variable('defaultCfpPassword'));
+    $twig->addGlobal('test', 'test' === variable('APP_ENV'));
 
     return $twig;
 }
@@ -372,14 +323,14 @@ function staticrypt(string $title, string $filename): void
 {
     run(
         command: [
-            __DIR__.'/node_modules/.bin/staticrypt',
-            '--template', __DIR__.'/var/tmp/staticrypt.html',
+            __DIR__ . '/node_modules/.bin/staticrypt',
+            '--template', __DIR__ . '/var/tmp/staticrypt.html',
             '--template-title', $title,
             '--config', 'false', // No need to store the salt, remember me is disabled
             '--remember', 'false', // Since data are sensitive, we don't want to remember the password
             ...(variable('defaultPassword') ? ['--short'] : []),
             '-d', 'dist/public',
-            __DIR__."/var/tmp/{$filename}",
+            __DIR__ . "/var/tmp/{$filename}",
         ],
         context: context()
             ->withEnvironment([
@@ -390,14 +341,14 @@ function staticrypt(string $title, string $filename): void
 
 function get_config_file(string $filename): string
 {
-    $path = __DIR__."/data/{$filename}.yaml";
+    $path = __DIR__ . "/data/{$filename}.yaml";
 
     if ('test' === variable('APP_ENV')) {
         io()->warning("Test mode enabled, using the default data for \"{$filename}\".");
-        $path = __DIR__."/data/{$filename}.yaml.dist";
+        $path = __DIR__ . "/data/{$filename}.yaml.dist";
     } elseif (!is_file($path)) {
         io()->warning("File \"{$filename}\" was not found, using the default one.");
-        $path = __DIR__."/data/{$filename}.yaml.dist";
+        $path = __DIR__ . "/data/{$filename}.yaml.dist";
     } elseif (!is_file($path)) {
         throw new \RuntimeException("The file {$filename} does not exist");
     }

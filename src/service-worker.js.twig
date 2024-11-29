@@ -3,9 +3,8 @@ self.addEventListener('install', (event) => {
     caches.open('my-cache').then((cache) => {
       return cache.addAll([
         '/',
-        '/index.html',
-        '/files.html',
-        '/recovery-codes.html',
+        '/files',
+        '/recovery-codes',
       ]);
     })
   );

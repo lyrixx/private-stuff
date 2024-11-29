@@ -6,8 +6,21 @@
         <meta name="robots" content="noindex nofollow">
         {% block meta %}{% endblock %}
         <title>{% block title %}{% endblock %}</title>
-        <style>{{source('css/styles.css')}}</style>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+        <link rel="manifest" href="./manifest.json">
+        <style>{{source('css/styles.css')}}</style>
+        <script defer>
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.error('Service Worker registration failed:', error);
+                    })
+                ;
+            }
+        </script>
     </head>
     <body>
         <div class="container">

@@ -5,10 +5,13 @@ namespace app;
 use Castor\Attribute\AsContext;
 use Castor\Attribute\AsTask;
 use Castor\Context;
+use Castor\Exception\ProblemException;
 use Symfony\Component\Filesystem\Path;
+use Symfony\Component\Process\ExecutableFinder;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
+use function Castor\check;
 use function Castor\context;
 use function Castor\finder;
 use function Castor\fs;
@@ -66,15 +69,21 @@ function build(bool $noOpen = false): void
     $staticrypt = $twig->render('staticrypt.html.twig');
     $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
     $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig');
+    $manifest = $twig->render('manifest.json.twig');
+    $serviceWorker = $twig->render('service-worker.js.twig');
 
     file_put_contents(__DIR__.'/dist/public/index.html', $index);
     file_put_contents(__DIR__.'/dist/public/files.html', $files);
+    file_put_contents(__DIR__.'/dist/public/manifest.json', $manifest);
+    file_put_contents(__DIR__.'/dist/public/service-worker.js', $serviceWorker);
     file_put_contents(__DIR__.'/dist/functions/template.ts', $cloudflareTemplateJs);
     // Some files are put in tmp/ directory only for debug purpose
     file_put_contents(__DIR__.'/var/tmp/cloudflare-template.html', $cloudflareTemplateHtml);
     file_put_contents(__DIR__.'/var/tmp/files.html', $files);
     file_put_contents(__DIR__.'/var/tmp/index.html', $index);
+    file_put_contents(__DIR__.'/var/tmp/manifest.json', $manifest);
     file_put_contents(__DIR__.'/var/tmp/recovery-codes.html', $recoveryCodes);
+    file_put_contents(__DIR__.'/var/tmp/service-worker.js', $serviceWorker);
     file_put_contents(__DIR__.'/var/tmp/staticrypt.html', $staticrypt);
 
     staticrypt('Recovery codes', 'recovery-codes.html');
@@ -95,8 +104,60 @@ function watchAndBuild(): void
 }
 
 #[AsTask('open', description: 'Open the build in the browser', aliases: ['open'])]
-function openDist(): void
+function openDist(bool $https = false): void
 {
+    if ($https) {
+        check(
+            'Mkcert is installed',
+            'Mkcert is required to use HTTPS',
+            fn () => (new ExecutableFinder())->find('mkcert'),
+        );
+
+        try {
+            check(
+                'Certificates exists',
+                'Certificates does not exist',
+                fn () => is_file(__DIR__.'/var/certs/private-stuff.test.pem'),
+            );
+        } catch (ProblemException) {
+            fs()->mkdir(__DIR__.'/var/certs');
+            check(
+                'Generate certificates',
+                'Could not generate the certificates',
+                fn () => run(
+                    command: [
+                        'mkcert',
+                        'private-stuff.test',
+                    ],
+                    context: context()
+                        ->withWorkingDirectory(__DIR__.'/var/certs')
+                        ->withQuiet(true)
+                ),
+            );
+        }
+
+        io()->comment('Starting the server with HTTPS on ');
+        io()->comment('https://private-stuff.test:9999/');
+
+        $server = <<<'SHELL'
+            docker run --rm -p 9999:443 -v `pwd`/var/certs:/etc/certs:ro  -v `pwd`/dist/public:/srv:ro $(
+                docker build --quiet -<<-EOD
+                    FROM caddy:latest
+                    COPY <<-EOF /etc/caddy/Caddyfile
+                        :443 {
+                            tls /etc/certs/private-stuff.test.pem /etc/certs/private-stuff.test-key.pem
+                            root * /srv
+                            file_server
+                        }
+            EOF
+            EOD
+            )
+            SHELL;
+
+        run($server);
+
+        return;
+    }
     open(__DIR__.'/dist/public/index.html');
 }
 

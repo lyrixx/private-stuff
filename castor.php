@@ -5,6 +5,7 @@ namespace app;
 use Castor\Attribute\AsContext;
 use Castor\Attribute\AsTask;
 use Castor\Context;
+use Symfony\Component\Filesystem\Path;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -36,7 +37,7 @@ function build(bool $noOpen = false): void
 
     io()->title('Building the project');
 
-    if (!variable('TEST') && variable('defaultPassword')) {
+    if ('test' !== variable('APP_ENV') && variable('defaultPassword')) {
         io()->warning('Using the default password. Set the PASSWORD environment variable to change it, or use a `.env.local` file.');
     }
 
@@ -46,8 +47,9 @@ function build(bool $noOpen = false): void
     fs()->mkdir(__DIR__.'/var/tmp');
     fs()->mirror(__DIR__.'/src/cloudflare-functions', __DIR__.'/dist/functions');
 
-    $files = get_files();
-    fs()->mirror(__DIR__.'/data/files', __DIR__.'/dist/public/files');
+    $filesDirectory = variable('FILES_DIRECTORY');
+    fs()->mirror($filesDirectory, __DIR__.'/dist/public/files');
+    $files = get_files($filesDirectory);
 
     $twig = build_twig();
 
@@ -58,12 +60,12 @@ function build(bool $noOpen = false): void
     $recoveryCodes = $twig->render('recovery-codes.html.twig', [
         'recovery_codes' => yaml_parse(get_config_file('recovery_codes')),
     ]);
-    $staticrypt = $twig->render('staticrypt.html.twig');
-    $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
-    $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig');
     $files = $twig->render('files.html.twig', [
         'files' => $files,
     ]);
+    $staticrypt = $twig->render('staticrypt.html.twig');
+    $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
+    $cloudflareTemplateHtml = $twig->render('cloudflare-template.html.twig');
 
     file_put_contents(__DIR__.'/dist/public/index.html', $index);
     file_put_contents(__DIR__.'/dist/public/files.html', $files);
@@ -264,14 +266,19 @@ function create_context(): Context
 {
     $data = load_dot_env();
 
-    $data['TEST'] ??= false;
-    if ($data['TEST']) {
+    if ('test' === $data['APP_ENV']) {
         $data['PASSWORD'] = 'pass';
         $data['CFP_PASSWORD'] = 'pass';
+        $data['FILES_DIRECTORY'] = __DIR__.'/data';
     }
 
-    $data['PASSWORD'] ?? throw new \RuntimeException('The PASSWORD environment variable is required');
-    $data['CFP_PASSWORD'] ?? throw new \RuntimeException('The CFP_PASSWORD environment variable is required');
+    $data['PASSWORD'] ?? throw new \RuntimeException('The "PASSWORD" environment variable is required.');
+    $data['CFP_PASSWORD'] ?? throw new \RuntimeException('The "CFP_PASSWORD" environment variable is required.');
+    $data['FILES_DIRECTORY'] ?? throw new \RuntimeException('The "FILES_DIRECTORY" environment variable is required.');
+
+    if (Path::isRelative($data['FILES_DIRECTORY'])) {
+        $data['FILES_DIRECTORY'] = Path::makeAbsolute($data['FILES_DIRECTORY'], __DIR__);
+    }
 
     $data['defaultPassword'] = 'pass' === $data['PASSWORD'];
     $data['defaultCfpPassword'] = 'pass' === $data['CFP_PASSWORD'];
@@ -324,7 +331,7 @@ function get_config_file(string $filename): string
 {
     $path = __DIR__."/data/{$filename}.yaml";
 
-    if (variable('TEST')) {
+    if ('test' === variable('APP_ENV')) {
         io()->warning("Test mode enabled, using the default data for \"{$filename}\".");
         $path = __DIR__."/data/{$filename}.yaml.dist";
     } elseif (!is_file($path)) {
@@ -337,10 +344,10 @@ function get_config_file(string $filename): string
     return file_get_contents($path);
 }
 
-function get_files(): array
+function get_files(string $directory): array
 {
     $files = finder()
-        ->in(__DIR__.'/data/files')
+        ->in($directory)
         ->files()
     ;
 
@@ -384,7 +391,6 @@ function get_emoji_for_file_extension(string $extension): string
         default => '📰',
     };
 }
-
 
 function humanize(string $text): string
 {

@@ -48,18 +48,52 @@ setup the password protection.
 * [castor](https://castor.jolicode.com/)
 * [nodejs](https://nodejs.org/)
 
+For development:
+
+* [docker](https://www.docker.com/)
+* [mkcert](https://github.com/FiloSottile/mkcert)
+
 ## Usage
 
-1. copy `.env` to `.env.local` and set a really strong password
-1. copy `data/websites.yaml.dist` to `data/websites.yaml` and fill it with your
+1. copy `.env` to `.env.local` and
+   1. set a really strong passwords
+   2. `CFP_` are not needed if you don't plan to deploy to Cloudflare Page
+   3. set `APP_ENV=prod` to use your own data
+2. copy `data/websites.yaml.dist` to `data/websites.yaml` and fill it with your
    data
-1. do the same with `data/administrative_contacts.yaml.dist` and
+3. do the same with `data/administrative_contacts.yaml.dist` and
    `emergency_contacts.yaml.dist`
-1. run `castor build`
-1. deploy `dist/public/index.html` somewhere
+4. run `castor build --no-open`
+5. deploy `dist/public/` directory somewhere on the internet
 
     >[!NOTE]
     > If plan to use cloudflare, just use `castor deploy`
+
+## Play with the stack
+
+If you want to play with the stack locally, you'll need to resolve
+`private-stuff.test` to local host:
+
+```
+echo "127.0.0.1 private-stuff.test" | sudo tee -a /etc/hosts
+```
+
+then run
+
+```
+castor build
+```
+
+It will, if needed:
+
+* install JS vendor
+* build all static content
+* create new SSL certificats
+* create docker image
+* start a docker container
+* open in your favorite browser the project
+
+You can also run the `castor` command to see all others available tasks.
 
 ## License
 

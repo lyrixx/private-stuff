@@ -48,7 +48,7 @@
     <div class="panel-section">
         <h2 class="panel-title">Useful Links</h2>
 
-        <a href="./files.html" class="card-block" rel="noopener noreferrer">
+        <a href="./files" class="card-block" rel="noopener noreferrer">
             <div class="card-content">
                 <h3 class="card-title">📂 List of files</h3>
                 <p class="card-description">
@@ -57,7 +57,7 @@
             </div>
         </a>
 
-        <a href="./recovery-codes.html" class="card-block" rel="noopener noreferrer">
+        <a href="./recovery-codes" class="card-block" rel="noopener noreferrer">
             <div class="card-content">
                 <h3 class="card-title">🔑 Recovery codes</h3>
                 <p class="card-description">
@@ -67,5 +67,18 @@
                 </p>
             </div>
         </a>
+
+        {% if test %}
+            <a href="./recovery-codes-decoded" class="card-block" rel="noopener noreferrer">
+                <div class="card-content">
+                    <h3 class="card-title">🕵🏼 Recovery codes</h3>
+                    <p class="card-description">
+                        Some recovery codes
+                        <br />
+                        <small>(Only visible in test mode)</small>
+                    </p>
+                </div>
+            </a>
+        {% endif %}
     </div>
 {% endblock %}

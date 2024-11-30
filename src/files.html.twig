@@ -9,7 +9,7 @@
         <ul class="file-list">
             {% for file in files %}
                 <li class="file-item">
-                    <a download href="./files/{{ file.path }}">
+                    <a download href="./upload/{{ file.path }}">
                         {{ file.emoji }}
                         {{ file.name|title }}
                     </a>

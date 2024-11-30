@@ -52,45 +52,33 @@ function build(bool $noOpen = false): void
     fs()->mkdir(__DIR__ . '/dist/public');
     fs()->remove(__DIR__ . '/var/tmp');
     fs()->mkdir(__DIR__ . '/var/tmp');
+
     fs()->mirror(__DIR__ . '/src/cloudflare-functions', __DIR__ . '/dist/functions');
+    fs()->copy(__DIR__ . '/src/favicon.ico', __DIR__ . '/dist/public/favicon.ico');
 
     $filesDirectory = variable('FILES_DIRECTORY');
     fs()->mirror($filesDirectory, __DIR__ . '/dist/public/upload');
     $fileList = get_files($filesDirectory);
 
-    $twig = build_twig();
-
-    $index = $twig->render('index.html.twig', [
+    render('/dist/public/index.html', 'index.html.twig', [
         'emergency_contacts' => yaml_parse(get_config_file('emergency_contacts')),
         'administrative_contacts' => yaml_parse(get_config_file('administrative_contacts')),
         'files' => $fileList,
     ]);
-    $recoveryCodes = $twig->render('recovery-codes.html.twig', [
+    render('/dist/public/files.html', 'files.html.twig', ['files' => $fileList]);
+    render('/dist/functions/template.ts', 'cloudflare-template.ts.twig');
+    render('/dist/public/manifest.json', 'manifest.json.twig');
+    render('/dist/public/service-worker.js', 'service-worker.js.twig', ['files' => $fileList]);
+    // Encrypted files are stored in tmp folder
+    render('/var/tmp/staticrypt.html', 'staticrypt.html.twig');
+    render('/var/tmp/recovery-codes.html', 'recovery-codes.html.twig', [
         'recovery_codes' => yaml_parse(get_config_file('recovery_codes')),
     ]);
-    $files = $twig->render('files.html.twig', [
-        'files' => $fileList,
-    ]);
-    $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
-    $manifest = $twig->render('manifest.json.twig');
-    $serviceWorker = $twig->render('service-worker.js.twig', [
-        'files' => $fileList,
-    ]);
-    $staticrypt = $twig->render('staticrypt.html.twig');
-
-    file_put_contents(__DIR__ . '/dist/public/index.html', $index);
-    file_put_contents(__DIR__ . '/dist/public/files.html', $files);
-    file_put_contents(__DIR__ . '/dist/public/manifest.json', $manifest);
-    file_put_contents(__DIR__ . '/dist/public/service-worker.js', $serviceWorker);
-    file_put_contents(__DIR__ . '/dist/functions/template.ts', $cloudflareTemplateJs);
-    fs()->copy(__DIR__ . '/src/favicon.ico', __DIR__ . '/dist/public/favicon.ico');
-
     if ('test' === variable('APP_ENV')) {
-        file_put_contents(__DIR__ . '/dist/public/recovery-codes-decoded.html', $recoveryCodes);
+        render('/dist/public/recovery-codes-decoded.html', 'recovery-codes.html.twig', [
+            'recovery_codes' => yaml_parse(get_config_file('recovery_codes')),
+        ]);
     }
-    // Encrypted files are stored in tmp folder
-    file_put_contents(__DIR__ . '/var/tmp/recovery-codes.html', $recoveryCodes);
-    file_put_contents(__DIR__ . '/var/tmp/staticrypt.html', $staticrypt);
 
     staticrypt('Recovery codes', 'recovery-codes.html');
 
@@ -148,6 +136,12 @@ function start(): void
             ),
         );
     }
+
+    check(
+        'Docker is installed',
+        'Docker is required to use HTTPS',
+        fn () => (new ExecutableFinder())->find('docker'),
+    );
 
     $server = <<<'SHELL'
         docker run --rm --name private-stuff -d -p 9999:443 -v `pwd`:/app:ro $(
@@ -307,8 +301,13 @@ function create_context(): Context
     return new Context($data);
 }
 
-function build_twig(): Environment
+function get_twig(): Environment
 {
+    static $twig = null;
+    if (null !== $twig) {
+        return $twig;
+    }
+
     $twig = new Environment(
         new FilesystemLoader([
             __DIR__ . '/src',
@@ -329,6 +328,11 @@ function build_twig(): Environment
     $twig->addGlobal('test', 'test' === variable('APP_ENV'));
 
     return $twig;
+}
+
+function render(string $dest, string $template, array $parameters = []): void
+{
+    file_put_contents(__DIR__ . $dest, get_twig()->render($template, $parameters));
 }
 
 function staticrypt(string $title, string $filename): void

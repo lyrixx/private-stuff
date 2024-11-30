@@ -1,11 +1,17 @@
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open('my-cache').then((cache) => {
-      return cache.addAll([
-        '/',
-        '/files',
-        '/recovery-codes',
-      ]);
+    caches.open('{{ "now"|date("c") }}').then((cache) => {
+      return cache.addAll({{
+        [
+          '/',
+          '/',
+          '/files',
+          '/recovery-codes',
+          '/manifest.json',
+          '/favicon.ico',
+        ]|merge(
+          files|map(file => "./upload/#{file.path}")
+        )|json_encode|raw }});
     })
   );
 });

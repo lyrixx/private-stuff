@@ -9,6 +9,7 @@ use Castor\Exception\ProblemException;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\Process\ExecutableFinder;
 use Twig\Environment;
+use Twig\Extension\DebugExtension;
 use Twig\Loader\FilesystemLoader;
 
 use function Castor\check;
@@ -55,23 +56,26 @@ function build(bool $noOpen = false): void
 
     $filesDirectory = variable('FILES_DIRECTORY');
     fs()->mirror($filesDirectory, __DIR__ . '/dist/public/upload');
-    $files = get_files($filesDirectory);
+    $fileList = get_files($filesDirectory);
 
     $twig = build_twig();
 
     $index = $twig->render('index.html.twig', [
         'emergency_contacts' => yaml_parse(get_config_file('emergency_contacts')),
         'administrative_contacts' => yaml_parse(get_config_file('administrative_contacts')),
+        'files' => $fileList,
     ]);
     $recoveryCodes = $twig->render('recovery-codes.html.twig', [
         'recovery_codes' => yaml_parse(get_config_file('recovery_codes')),
     ]);
     $files = $twig->render('files.html.twig', [
-        'files' => $files,
+        'files' => $fileList,
     ]);
     $cloudflareTemplateJs = $twig->render('cloudflare-template.ts.twig');
     $manifest = $twig->render('manifest.json.twig');
-    $serviceWorker = $twig->render('service-worker.js.twig');
+    $serviceWorker = $twig->render('service-worker.js.twig', [
+        'files' => $fileList,
+    ]);
     $staticrypt = $twig->render('staticrypt.html.twig');
 
     file_put_contents(__DIR__ . '/dist/public/index.html', $index);
@@ -79,6 +83,8 @@ function build(bool $noOpen = false): void
     file_put_contents(__DIR__ . '/dist/public/manifest.json', $manifest);
     file_put_contents(__DIR__ . '/dist/public/service-worker.js', $serviceWorker);
     file_put_contents(__DIR__ . '/dist/functions/template.ts', $cloudflareTemplateJs);
+    fs()->copy(__DIR__ . '/src/favicon.ico', __DIR__ . '/dist/public/favicon.ico');
+
     if ('test' === variable('APP_ENV')) {
         file_put_contents(__DIR__ . '/dist/public/recovery-codes-decoded.html', $recoveryCodes);
     }
@@ -243,8 +249,12 @@ function openCloudflare(): void
 #[AsTask(description: 'Deploy the project to Cloudflare', aliases: ['deploy'])]
 function deploy(): void
 {
+    if ('test' === variable('APP_ENV')) {
+        throw new \RuntimeException('You cannot deploy in "test" env.');
+    }
+
     if (variable('defaultCfpPassword')) {
-        throw new \RuntimeException('You cannot deploy the project with the default password');
+        throw new \RuntimeException('You cannot deploy the project with the default password.');
     }
 
     run(
@@ -311,6 +321,8 @@ function build_twig(): Environment
     // Hack to make the watch function works, we want to invalide the cache every time!
     $r = new \ReflectionProperty($twig, 'optionsHash');
     $r->setValue($twig, $r->getValue($twig) . bin2hex(random_bytes(32)));
+
+    $twig->addExtension(new DebugExtension());
 
     $twig->addGlobal('default_password', variable('defaultPassword'));
     $twig->addGlobal('default_cfp_password', variable('defaultCfpPassword'));

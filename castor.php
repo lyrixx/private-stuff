@@ -82,7 +82,7 @@ function build(bool $noOpen = false): void
 
     staticrypt('Recovery codes', 'recovery-codes.html');
 
-    io()->success('Project built successfully');
+    io()->success('Project successfully built');
 
     if (!$noOpen) {
         open();
@@ -93,7 +93,7 @@ function build(bool $noOpen = false): void
 function watchAndBuild(): void
 {
     watch(__DIR__ . '/src/...', function () {
-        build(true);
+        run(['castor', 'build', '--no-open']);
     });
 }
 
@@ -251,6 +251,10 @@ function deploy(): void
         throw new \RuntimeException('You cannot deploy the project with the default password.');
     }
 
+    build(true);
+
+    io()->title('Deploying the project');
+
     run(
         command: vsprintf('echo %s | %s pages secret put --project-name %s CFP_PASSWORD', [
             escapeshellarg(variable('CFP_PASSWORD')),
@@ -274,6 +278,8 @@ function deploy(): void
             ->toInteractive()
             ->withWorkingDirectory(__DIR__ . '/dist')
     );
+
+    io()->success('Project successfully deployed');
 }
 
 #[AsContext()]

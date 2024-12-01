@@ -54,7 +54,7 @@ function build(bool $noOpen = false): void
     fs()->mkdir(__DIR__ . '/var/tmp');
 
     fs()->mirror(__DIR__ . '/src/cloudflare-functions', __DIR__ . '/dist/functions');
-    fs()->copy(__DIR__ . '/src/favicon.ico', __DIR__ . '/dist/public/favicon.ico');
+    fs()->mirror(__DIR__ . '/src/icons', __DIR__ . '/dist/public');
 
     $filesDirectory = variable('FILES_DIRECTORY');
     fs()->mirror($filesDirectory, __DIR__ . '/dist/public/upload');
@@ -290,7 +290,7 @@ function create_context(): Context
     if ('test' === $data['APP_ENV']) {
         $data['PASSWORD'] = 'pass';
         $data['CFP_PASSWORD'] = 'pass';
-        $data['FILES_DIRECTORY'] = __DIR__ . '/data';
+        $data['FILES_DIRECTORY'] = __DIR__ . '/src/icons';
     }
 
     $data['PASSWORD'] ?? throw new \RuntimeException('The "PASSWORD" environment variable is required.');

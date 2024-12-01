@@ -2,8 +2,10 @@
 /.castor.stub.php
 /.castor/vendor/
 /.env.local
+/data/administrative_contacts.yaml
+/data/emergency_contacts.yaml
+/data/files/
 /data/recovery_codes.yaml
 /dist/
 /node_modules/
 /var/
-/data/files/

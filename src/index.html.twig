@@ -28,15 +28,19 @@
 
         <div class="card-block card-no-hover">
             <div class="card-content">
-                <h3 class="card-title">🏦 Administrative contact</h3>
+                <h3 class="card-title">🏦 Administrative contacts</h3>
                 <div class="emergency-contacts">
                     <ul class="contact-list">
                         {% for contact in administrative_contacts %}
                             <li class="contact-item">
                                 <span class="contact-name">{{ contact.name }}</span> -
-                                <span class="contact-id" title="account number">{{ contact.account_id }}</span> -
-                                <a href="tel:{{ contact.phone }}" class="contact-phone">☎ {{ contact.phone }}</a> -
-                                <a href="mailto:{{ contact.email }}" class="contact-email">📧 {{ contact.email }}</a>
+                                <span class="contact-id" title="account number">{{ contact.account_id }}</span>
+                                {% if contact.phone ?? false %}
+                                    - <a href="tel:{{ contact.phone }}" class="contact-phone">☎ {{ contact.phone }}</a>
+                                {% endif %}
+                                {% if contact.email ?? false %}
+                                    - <a href="mailto:{{ contact.email }}" class="contact-email">📧 {{ contact.email }}</a>
+                                {% endif %}
                             </li>
                         {% endfor %}
                     </ul>

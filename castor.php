@@ -24,6 +24,7 @@ use function Castor\run;
 use function Castor\variable;
 use function Castor\watch;
 use function Castor\yaml_parse;
+use function Symfony\Component\String\u;
 
 import(__DIR__ . '/.castor');
 
@@ -388,10 +389,15 @@ function get_files(string $directory): array
 
     $result = [];
     foreach ($files as $file) {
+        $path = $file->getRelativePathname();
+        $extension = $file->getExtension();
+        $name = humanize(u($path)->trimSuffix('.' . $extension)->toString());
+
         $result[] = [
-            'path' => $file->getRelativePathname(),
-            'emoji' => get_emoji_for_file_extension($e = $file->getExtension()),
-            'name' => humanize($file->getBasename(".{$e}")),
+            'path' => $path,
+            'extension' => $extension,
+            'name' => $name,
+            'emoji' => get_emoji_for_file_extension($extension),
         ];
     }
 

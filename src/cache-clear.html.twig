@@ -1,0 +1,14 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Cache clear{% endblock %}
+
+{% block scripts %}
+    <script defer>
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            for (const registration of registrations) {
+                registration.unregister();
+            }
+        });
+    </script>
+{% endblock %}
+

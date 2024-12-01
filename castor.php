@@ -69,6 +69,7 @@ function build(bool $noOpen = false): void
     render('/dist/functions/template.ts', 'cloudflare-template.ts.twig');
     render('/dist/public/manifest.json', 'manifest.json.twig');
     render('/dist/public/service-worker.js', 'service-worker.js.twig', ['files' => $fileList]);
+    render('/dist/public/cache-clear.html', 'cache-clear.html.twig');
     // Encrypted files are stored in tmp folder
     render('/var/tmp/staticrypt.html', 'staticrypt.html.twig');
     render('/var/tmp/recovery-codes.html', 'recovery-codes.html.twig', [

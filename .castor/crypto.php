@@ -5,6 +5,7 @@ namespace crypto;
 use Castor\Attribute\AsTask;
 
 use function Castor\finder;
+use function Castor\io;
 use function Castor\variable;
 
 #[AsTask(description: 'Encrypt a directory', aliases: ['encrypt'])]
@@ -65,35 +66,40 @@ function decrypt(string $directory): void
     $password = variable('PASSWORD');
 
     foreach ($files as $file) {
-        $encryptedData = file_get_contents($file);
-        $decoded = base64_decode($encryptedData);
-        $salt = substr($decoded, 0, \SODIUM_CRYPTO_PWHASH_SALTBYTES);
-        if (\SODIUM_CRYPTO_PWHASH_SALTBYTES !== \strlen($salt)) {
-            throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s". Impossible to extract salt.', $file));
+        try {
+            $encryptedData = file_get_contents($file);
+            $decoded = base64_decode($encryptedData);
+            $salt = substr($decoded, 0, \SODIUM_CRYPTO_PWHASH_SALTBYTES);
+            if (\SODIUM_CRYPTO_PWHASH_SALTBYTES !== \strlen($salt)) {
+
+                throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s". Impossible to extract salt.', $file));
+            }
+            $nonce = substr($decoded, \SODIUM_CRYPTO_PWHASH_SALTBYTES, \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+            if (\SODIUM_CRYPTO_SECRETBOX_NONCEBYTES !== \strlen($nonce)) {
+                throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s". Impossible to extract nonce', $file));
+            }
+            $cipherText = substr($decoded, \SODIUM_CRYPTO_PWHASH_SALTBYTES + \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+
+            $key = sodium_crypto_pwhash(
+                \SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
+                $password,
+                $salt,
+                \SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
+                \SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
+            );
+
+            $decrypted = sodium_crypto_secretbox_open($cipherText, $nonce, $key);
+
+            if (false === $decrypted) {
+                throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s".', $file));
+            }
+
+            file_put_contents($file, $decrypted);
+            sodium_memzero($decrypted);
+            sodium_memzero($key);
+        } catch (\Exception $e) {
+            io()->error(\sprintf('An error occurred while decrypting the file "%s": %s', $file, $e->getMessage()));
         }
-        $nonce = substr($decoded, \SODIUM_CRYPTO_PWHASH_SALTBYTES, \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-        if (\SODIUM_CRYPTO_SECRETBOX_NONCEBYTES !== \strlen($nonce)) {
-            throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s". Impossible to extract nonce', $file));
-        }
-        $cipherText = substr($decoded, \SODIUM_CRYPTO_PWHASH_SALTBYTES + \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-
-        $key = sodium_crypto_pwhash(
-            \SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
-            $password,
-            $salt,
-            \SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
-            \SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
-        );
-
-        $decrypted = sodium_crypto_secretbox_open($cipherText, $nonce, $key);
-
-        if (false === $decrypted) {
-            throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s".', $file));
-        }
-
-        file_put_contents($file, $decrypted);
-        sodium_memzero($decrypted);
-        sodium_memzero($key);
     }
 
     sodium_memzero($password);

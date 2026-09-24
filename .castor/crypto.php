@@ -4,19 +4,22 @@ namespace crypto;
 
 use Castor\Attribute\AsTask;
 
+use function Castor\decrypt_file_with_password;
+use function Castor\encrypt_file_with_password;
 use function Castor\finder;
+use function Castor\fs;
 use function Castor\io;
 use function Castor\variable;
 
-#[AsTask(description: 'Encrypt a directory', aliases: ['encrypt'])]
+#[AsTask(description: 'Encrypt all the files of a directory, in place, with a ".enc" suffix', aliases: ['encrypt'])]
 function encrypt(string $directory): void
 {
     if (!is_dir($directory)) {
-        throw new \RuntimeException('The directory does not exist');
+        throw new \RuntimeException(\sprintf('The directory "%s" does not exist.', $directory));
     }
 
     if (variable('defaultPassword')) {
-        throw new \RuntimeException('You cannot encrypt data with the default password');
+        throw new \RuntimeException('You cannot encrypt data with the default password. Are you in "prod" mode?');
     }
 
     $password = variable('PASSWORD');
@@ -24,83 +27,62 @@ function encrypt(string $directory): void
         throw new \RuntimeException('The password must be at least 14 characters long.');
     }
 
-    $salt = random_bytes(\SODIUM_CRYPTO_PWHASH_SALTBYTES);
-    $key = sodium_crypto_pwhash(
-        \SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
-        $password,
-        $salt,
-        \SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
-        \SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
-    );
-    $nonce = random_bytes(\SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+    $files = iterator_to_array(finder()->in($directory)->files()->notName('*.enc'), false);
 
-    $files = finder()
-        ->in($directory)
-        ->files()
-    ;
     foreach ($files as $file) {
-        $content = file_get_contents($file);
-        $encrypted = sodium_crypto_secretbox($content, $nonce, $key);
-        $encryptedData = $salt . $nonce . $encrypted;
-        $encoded = base64_encode($encryptedData);
-        file_put_contents($file, $encoded);
-        sodium_memzero($content);
+        encrypt_file_with_password($file->getPathname(), $password);
+        fs()->remove($file->getPathname());
+
+        io()->text(\sprintf('Encrypted "%s".', $file->getRelativePathname()));
     }
 
-    sodium_memzero($password);
-    sodium_memzero($key);
+    io()->success(\sprintf('%d file(s) encrypted.', \count($files)));
 }
 
-#[AsTask(description: 'Decrypt a directory', aliases: ['decrypt'])]
+#[AsTask(description: 'Decrypt all the ".enc" files of a directory, in place', aliases: ['decrypt'])]
 function decrypt(string $directory): void
 {
     if (!is_dir($directory)) {
-        throw new \RuntimeException('The directory does not exist.');
+        throw new \RuntimeException(\sprintf('The directory "%s" does not exist.', $directory));
     }
 
-    $files = finder()
-        ->in($directory)
-        ->files()
-    ;
+    if (variable('defaultPassword')) {
+        throw new \RuntimeException('You cannot decrypt data with the default password. Are you in "prod" mode?');
+    }
 
     $password = variable('PASSWORD');
 
+    $files = iterator_to_array(finder()->in($directory)->files()->name('*.enc'), false);
+
+    $failures = 0;
     foreach ($files as $file) {
-        try {
-            $encryptedData = file_get_contents($file);
-            $decoded = base64_decode($encryptedData);
-            $salt = substr($decoded, 0, \SODIUM_CRYPTO_PWHASH_SALTBYTES);
-            if (\SODIUM_CRYPTO_PWHASH_SALTBYTES !== \strlen($salt)) {
+        $path = $file->getPathname();
+        $target = substr($path, 0, -\strlen('.enc'));
 
-                throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s". Impossible to extract salt.', $file));
-            }
-            $nonce = substr($decoded, \SODIUM_CRYPTO_PWHASH_SALTBYTES, \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-            if (\SODIUM_CRYPTO_SECRETBOX_NONCEBYTES !== \strlen($nonce)) {
-                throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s". Impossible to extract nonce', $file));
-            }
-            $cipherText = substr($decoded, \SODIUM_CRYPTO_PWHASH_SALTBYTES + \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        if (file_exists($target)) {
+            ++$failures;
+            io()->warning(\sprintf('Skipped "%s": "%s" already exists.', $file->getRelativePathname(), basename($target)));
 
-            $key = sodium_crypto_pwhash(
-                \SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
-                $password,
-                $salt,
-                \SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
-                \SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
-            );
-
-            $decrypted = sodium_crypto_secretbox_open($cipherText, $nonce, $key);
-
-            if (false === $decrypted) {
-                throw new \RuntimeException(\sprintf('Failed to decrypt the file "%s".', $file));
-            }
-
-            file_put_contents($file, $decrypted);
-            sodium_memzero($decrypted);
-            sodium_memzero($key);
-        } catch (\Exception $e) {
-            io()->error(\sprintf('An error occurred while decrypting the file "%s": %s', $file, $e->getMessage()));
+            continue;
         }
+
+        try {
+            decrypt_file_with_password($path, $password, $target);
+        } catch (\Exception $e) {
+            ++$failures;
+            io()->error(\sprintf('Failed to decrypt "%s": %s', $file->getRelativePathname(), $e->getMessage()));
+
+            continue;
+        }
+
+        fs()->remove($path);
+
+        io()->text(\sprintf('Decrypted "%s".', $file->getRelativePathname()));
     }
 
-    sodium_memzero($password);
+    if ($failures > 0) {
+        throw new \RuntimeException(\sprintf('%d file(s) could not be decrypted, see above.', $failures));
+    }
+
+    io()->success(\sprintf('%d file(s) decrypted.', \count($files)));
 }

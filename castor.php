@@ -2,6 +2,9 @@
 
 namespace app;
 
+// Castor changes its current directory to the project root (default in Castor 2.0)
+defined('CASTOR_USE_CHDIR') || define('CASTOR_USE_CHDIR', true);
+
 use Castor\Attribute\AsContext;
 use Castor\Attribute\AsTask;
 use Castor\Context;
@@ -16,6 +19,8 @@ use function Castor\check;
 use function Castor\context;
 use function Castor\finder;
 use function Castor\fs;
+use function Castor\guard_min_version;
+use function Castor\http_request;
 use function Castor\import;
 use function Castor\io;
 use function Castor\load_dot_env;
@@ -25,6 +30,9 @@ use function Castor\variable;
 use function Castor\watch;
 use function Castor\yaml_parse;
 use function Symfony\Component\String\u;
+
+// The format of the native crypto functions changed in castor 1.8.0
+guard_min_version('1.8.0');
 
 import(__DIR__ . '/.castor');
 
@@ -45,8 +53,14 @@ function build(bool $noOpen = false): void
 
     io()->title('Building the project');
 
-    if ('test' !== variable('APP_ENV') && variable('defaultPassword')) {
-        io()->warning('Using the default password. Set the PASSWORD environment variable to change it, or use a `.env.local` file.');
+    if ('dev' === variable('APP_ENV')) {
+        io()->note('Building in "dev" mode: dummy data and default passwords. Set APP_ENV=prod (in `.env.local` or on the command line) to use your own data.');
+    } else {
+        io()->note('Building in "prod" mode.');
+
+        if (variable('defaultPassword')) {
+            io()->warning('Using the default password. Set the PASSWORD environment variable to change it, or use a `.env.prod.local` file.');
+        }
     }
 
     fs()->remove(__DIR__ . '/dist');
@@ -76,7 +90,7 @@ function build(bool $noOpen = false): void
     render('/var/tmp/recovery-codes.html', 'recovery-codes.html.twig', [
         'recovery_codes' => yaml_parse(get_config_file('recovery_codes')),
     ]);
-    if ('test' === variable('APP_ENV')) {
+    if ('dev' === variable('APP_ENV')) {
         render('/dist/public/recovery-codes-decoded.html', 'recovery-codes.html.twig', [
             'recovery_codes' => yaml_parse(get_config_file('recovery_codes')),
         ]);
@@ -148,7 +162,7 @@ function start(): void
     $server = <<<'SHELL'
         docker run --rm --name private-stuff -d -p 9999:443 -v `pwd`:/app:ro $(
             docker build --quiet -<<-EOD
-                FROM caddy:2.9-alpine
+                FROM caddy:2.11-alpine
                 COPY <<-EOF /etc/caddy/Caddyfile
                     :443 {
                         tls /app/var/certs/private-stuff.test.pem /app/var/certs/private-stuff.test-key.pem
@@ -245,40 +259,78 @@ function openCloudflare(): void
 #[AsTask(description: 'Deploy the project to Cloudflare', aliases: ['deploy'])]
 function deploy(): void
 {
-    if ('test' === variable('APP_ENV')) {
-        throw new \RuntimeException('You cannot deploy in "test" env.');
+    if ('prod' !== variable('APP_ENV')) {
+        throw new \RuntimeException(\sprintf('You cannot deploy in "%s" mode, only in "prod" mode. Set APP_ENV=prod in `.env.local` or on the command line.', variable('APP_ENV')));
     }
 
     if (variable('defaultCfpPassword')) {
         throw new \RuntimeException('You cannot deploy the project with the default password.');
     }
 
+    $wrangler = __DIR__ . '/node_modules/.bin/wrangler';
+
+    // The secret is sent to wrangler on stdin, so wrangler runs without a TTY
+    // and cannot start its login flow: check the credentials first
+    check(
+        'Wrangler is authenticated',
+        'Wrangler is not authenticated. Run `node_modules/.bin/wrangler login` once, or set CLOUDFLARE_API_TOKEN (and CLOUDFLARE_ACCOUNT_ID if you have several accounts) in `.env.prod.local`.',
+        function () use ($wrangler): bool {
+            $process = run(
+                command: [$wrangler, 'whoami'],
+                context: context()
+                    ->withQuiet()
+                    ->withAllowFailure()
+                    ->withTty(false)
+                    ->withPty(false)
+            );
+
+            return !str_contains($process->getOutput() . $process->getErrorOutput(), 'not authenticated');
+        },
+    );
+
     build(true);
 
     io()->title('Deploying the project');
 
+    // The secret goes through stdin: it never appears on a command line
     run(
-        command: vsprintf('echo %s | %s pages secret put --project-name %s CFP_PASSWORD', [
-            escapeshellarg(variable('CFP_PASSWORD')),
-            __DIR__ . '/node_modules/.bin/wrangler',
-            escapeshellarg(variable('CFP_PROJECT_NAME')),
-        ]),
+        command: [$wrangler, 'pages', 'secret', 'put', 'CFP_PASSWORD', '--project-name', variable('CFP_PROJECT_NAME')],
         context: context()
-            ->withPty(false)
+            ->withInput(variable('CFP_PASSWORD'))
             ->withTty(false)
+            ->withPty(false)
     );
 
+    // Always deploy to the production environment, whatever the local git
+    // branch: a preview deployment does not get the production secrets, so
+    // CFP_PASSWORD would be empty and the site would be publicly readable
     run(
         command: [
-            __DIR__ . '/node_modules/.bin/wrangler',
-            'pages',
-            'deploy',
-            'public',
+            $wrangler, 'pages', 'deploy', 'public',
             '--project-name', variable('CFP_PROJECT_NAME'),
+            '--branch', variable('CFP_PRODUCTION_BRANCH', 'main'),
         ],
         context: context()
             ->toInteractive()
             ->withWorkingDirectory(__DIR__ . '/dist')
+    );
+
+    $url = \sprintf('https://%s.pages.dev/', variable('CFP_PROJECT_NAME'));
+    check(
+        \sprintf('The deployed site (%s) asks for a password', $url),
+        \sprintf('The deployed site (%s) does NOT ask for a password! Check the CFP_PASSWORD secret of the Pages project, and delete the deployment if needed.', $url),
+        function () use ($url): bool {
+            // The production alias may take a moment to point to the new deployment
+            for ($attempt = 1; $attempt <= 5; ++$attempt) {
+                $content = http_request('GET', $url, ['timeout' => 15])->getContent(false);
+                if (str_contains($content, 'cfp_login')) {
+                    return true;
+                }
+                sleep(2);
+            }
+
+            return false;
+        },
     );
 
     io()->success('Project successfully deployed');
@@ -289,7 +341,14 @@ function create_context(): Context
 {
     $data = load_dot_env();
 
-    if ('test' === $data['APP_ENV']) {
+    $env = $data['APP_ENV'] ?? 'dev';
+    if (!\in_array($env, ['dev', 'prod'], true)) {
+        throw new \RuntimeException(\sprintf('The "APP_ENV" environment variable must be "dev" or "prod", got "%s".', $env));
+    }
+    $data['APP_ENV'] = $env;
+
+    if ('dev' === $env) {
+        // Never use real passwords nor real files in dev mode, whatever the env files say
         $data['PASSWORD'] = 'pass';
         $data['CFP_PASSWORD'] = 'pass';
         $data['FILES_DIRECTORY'] = __DIR__ . '/src/icons';
@@ -333,7 +392,7 @@ function get_twig(): Environment
 
     $twig->addGlobal('default_password', variable('defaultPassword'));
     $twig->addGlobal('default_cfp_password', variable('defaultCfpPassword'));
-    $twig->addGlobal('test', 'test' === variable('APP_ENV'));
+    $twig->addGlobal('dev', 'dev' === variable('APP_ENV'));
 
     return $twig;
 }
@@ -365,16 +424,14 @@ function staticrypt(string $title, string $filename): void
 
 function get_config_file(string $filename): string
 {
-    $path = __DIR__ . "/data/{$filename}.yaml";
+    if ('dev' === variable('APP_ENV')) {
+        return file_get_contents(__DIR__ . "/data/{$filename}.yaml.dist");
+    }
 
-    if ('test' === variable('APP_ENV')) {
-        io()->warning("Test mode enabled, using the default data for \"{$filename}\".");
-        $path = __DIR__ . "/data/{$filename}.yaml.dist";
-    } elseif (!is_file($path)) {
+    $path = __DIR__ . "/data/{$filename}.yaml";
+    if (!is_file($path)) {
         io()->warning("File \"{$filename}\" was not found, using the default one.");
         $path = __DIR__ . "/data/{$filename}.yaml.dist";
-    } elseif (!is_file($path)) {
-        throw new \RuntimeException("The file {$filename} does not exist");
     }
 
     return file_get_contents($path);

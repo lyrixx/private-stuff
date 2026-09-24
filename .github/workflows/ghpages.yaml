@@ -17,13 +17,13 @@ jobs:
             url: ${{steps.deployment.outputs.page_url}}
         steps:
             - name: Setup Pages
-              uses: actions/configure-pages@v4
+              uses: actions/configure-pages@v6
 
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
 
             - name: Setup castor
-              uses: castor-php/setup-castor@v0.1.0
+              uses: castor-php/setup-castor@v1
 
             - name: Build
               run: |
@@ -31,10 +31,10 @@ jobs:
                   castor build --no-open
 
             - name: Upload Artifact
-              uses: actions/upload-pages-artifact@v3
+              uses: actions/upload-pages-artifact@v5
               with:
                   path: "dist/public"
 
             - name: Deploy to GitHub Pages
               id: deployment
-              uses: actions/deploy-pages@v4
+              uses: actions/deploy-pages@v5

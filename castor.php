@@ -20,6 +20,7 @@ use function Castor\context;
 use function Castor\finder;
 use function Castor\fs;
 use function Castor\guard_min_version;
+use function Castor\http_request;
 use function Castor\import;
 use function Castor\io;
 use function Castor\load_dot_env;
@@ -300,11 +301,36 @@ function deploy(): void
             ->withPty(false)
     );
 
+    // Always deploy to the production environment, whatever the local git
+    // branch: a preview deployment does not get the production secrets, so
+    // CFP_PASSWORD would be empty and the site would be publicly readable
     run(
-        command: [$wrangler, 'pages', 'deploy', 'public', '--project-name', variable('CFP_PROJECT_NAME')],
+        command: [
+            $wrangler, 'pages', 'deploy', 'public',
+            '--project-name', variable('CFP_PROJECT_NAME'),
+            '--branch', variable('CFP_PRODUCTION_BRANCH', 'main'),
+        ],
         context: context()
             ->toInteractive()
             ->withWorkingDirectory(__DIR__ . '/dist')
+    );
+
+    $url = \sprintf('https://%s.pages.dev/', variable('CFP_PROJECT_NAME'));
+    check(
+        \sprintf('The deployed site (%s) asks for a password', $url),
+        \sprintf('The deployed site (%s) does NOT ask for a password! Check the CFP_PASSWORD secret of the Pages project, and delete the deployment if needed.', $url),
+        function () use ($url): bool {
+            // The production alias may take a moment to point to the new deployment
+            for ($attempt = 1; $attempt <= 5; ++$attempt) {
+                $content = http_request('GET', $url, ['timeout' => 15])->getContent(false);
+                if (str_contains($content, 'cfp_login')) {
+                    return true;
+                }
+                sleep(2);
+            }
+
+            return false;
+        },
     );
 
     io()->success('Project successfully deployed');

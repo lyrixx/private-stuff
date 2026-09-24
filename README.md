@@ -48,6 +48,14 @@ setup the password protection.
 or put a `CLOUDFLARE_API_TOKEN` in `.env.prod.local`, plus a
 `CLOUDFLARE_ACCOUNT_ID` if the token has access to several accounts.
 
+`castor deploy` always deploys to the production branch of the Pages project
+(`CFP_PRODUCTION_BRANCH`, `main` by default), whatever your local git branch,
+and then checks that the site asks for a password. Pages *preview* deployments
+(any other branch) do not receive the production secrets: `CFP_PASSWORD` would
+be empty there and the middleware would let everyone in. Never create one with
+real data, and consider enabling the Access policy for preview deployments in
+the settings of the Pages project.
+
 ## Requirements
 
 * [castor](https://castor.jolicode.com/)

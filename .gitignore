@@ -2,6 +2,7 @@
 /.castor.stub.php
 /.castor/vendor/
 /.env.local
+/.env.*.local
 /data/administrative_contacts.yaml
 /data/emergency_contacts.yaml
 /data/files/

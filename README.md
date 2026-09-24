@@ -55,16 +55,30 @@ For development:
 
 ## Usage
 
-1. copy `.env` to `.env.local` and
-   1. set a really strong passwords
+The project has two modes, selected by the `APP_ENV` variable:
+
+* `dev` (the default): dummy data, default passwords, deploy is forbidden. This
+  is what a fresh clone and the GitHub Pages workflow use. Nothing to configure.
+* `prod`: your own data from `data/` and your own passwords.
+
+To work in `prod` mode locally:
+
+1. create `.env.local` with a single line: `APP_ENV=prod`
+2. create `.env.prod.local` with your secrets (copy the keys from `.env`)
+   1. set really strong passwords
    2. `CFP_` are not needed if you don't plan to deploy to Cloudflare Page
-   3. set `APP_ENV=prod` to use your own data
-2. copy `data/websites.yaml.dist` to `data/websites.yaml` and fill it with your
-   data
-3. do the same with `data/administrative_contacts.yaml.dist` and
+
+   Both files are gitignored, and `.env.prod.local` is only loaded in `prod`
+   mode, so your secrets never leak into a `dev` build.
+3. copy `data/recovery_codes.yaml.dist` to `data/recovery_codes.yaml` and fill
+   it with your data
+4. do the same with `data/administrative_contacts.yaml.dist` and
    `emergency_contacts.yaml.dist`
-4. run `castor build --no-open`
-5. deploy `dist/public/` directory somewhere on the internet
+5. run `castor build --no-open`
+6. deploy `dist/public/` directory somewhere on the internet
+
+To temporarily switch mode for a single command, set the variable on the command
+line, e.g. `APP_ENV=dev castor build` to check the templates with dummy data.
 
     >[!NOTE]
     > If plan to use cloudflare, just use `castor deploy`

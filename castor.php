@@ -16,6 +16,7 @@ use function Castor\check;
 use function Castor\context;
 use function Castor\finder;
 use function Castor\fs;
+use function Castor\guard_min_version;
 use function Castor\import;
 use function Castor\io;
 use function Castor\load_dot_env;
@@ -25,6 +26,9 @@ use function Castor\variable;
 use function Castor\watch;
 use function Castor\yaml_parse;
 use function Symfony\Component\String\u;
+
+// The format of the native crypto functions changed in castor 1.8.0
+guard_min_version('1.8.0');
 
 import(__DIR__ . '/.castor');
 

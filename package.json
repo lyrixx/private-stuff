@@ -2,7 +2,7 @@
   "name": "private-stuff",
   "license": "UNLICENSED",
   "devDependencies": {
-    "staticrypt": "^3.5.0",
-    "wrangler": "^3.91.0"
+    "staticrypt": "^3.5.4",
+    "wrangler": "^4.137.0"
   }
 }

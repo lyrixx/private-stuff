@@ -2,6 +2,9 @@
 
 namespace app;
 
+// Castor changes its current directory to the project root (default in Castor 2.0)
+defined('CASTOR_USE_CHDIR') || define('CASTOR_USE_CHDIR', true);
+
 use Castor\Attribute\AsContext;
 use Castor\Attribute\AsTask;
 use Castor\Context;
@@ -158,7 +161,7 @@ function start(): void
     $server = <<<'SHELL'
         docker run --rm --name private-stuff -d -p 9999:443 -v `pwd`:/app:ro $(
             docker build --quiet -<<-EOD
-                FROM caddy:2.9-alpine
+                FROM caddy:2.11-alpine
                 COPY <<-EOF /etc/caddy/Caddyfile
                     :443 {
                         tls /app/var/certs/private-stuff.test.pem /app/var/certs/private-stuff.test-key.pem

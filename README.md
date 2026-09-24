@@ -43,6 +43,11 @@ setup the password protection.
 > the artifacts generated in `dist/public` and deploy them on any static
 > hosting.
 
+`castor deploy` needs wrangler to be authenticated. Either run
+`node_modules/.bin/wrangler login` once (OAuth, stored in `~/.config/.wrangler/`),
+or put a `CLOUDFLARE_API_TOKEN` in `.env.prod.local`, plus a
+`CLOUDFLARE_ACCOUNT_ID` if the token has access to several accounts.
+
 ## Requirements
 
 * [castor](https://castor.jolicode.com/)

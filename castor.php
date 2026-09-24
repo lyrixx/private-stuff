@@ -266,29 +266,42 @@ function deploy(): void
         throw new \RuntimeException('You cannot deploy the project with the default password.');
     }
 
+    $wrangler = __DIR__ . '/node_modules/.bin/wrangler';
+
+    // The secret is sent to wrangler on stdin, so wrangler runs without a TTY
+    // and cannot start its login flow: check the credentials first
+    check(
+        'Wrangler is authenticated',
+        'Wrangler is not authenticated. Run `node_modules/.bin/wrangler login` once, or set CLOUDFLARE_API_TOKEN (and CLOUDFLARE_ACCOUNT_ID if you have several accounts) in `.env.prod.local`.',
+        function () use ($wrangler): bool {
+            $process = run(
+                command: [$wrangler, 'whoami'],
+                context: context()
+                    ->withQuiet()
+                    ->withAllowFailure()
+                    ->withTty(false)
+                    ->withPty(false)
+            );
+
+            return !str_contains($process->getOutput() . $process->getErrorOutput(), 'not authenticated');
+        },
+    );
+
     build(true);
 
     io()->title('Deploying the project');
 
+    // The secret goes through stdin: it never appears on a command line
     run(
-        command: vsprintf('echo %s | %s pages secret put --project-name %s CFP_PASSWORD', [
-            escapeshellarg(variable('CFP_PASSWORD')),
-            __DIR__ . '/node_modules/.bin/wrangler',
-            escapeshellarg(variable('CFP_PROJECT_NAME')),
-        ]),
+        command: [$wrangler, 'pages', 'secret', 'put', 'CFP_PASSWORD', '--project-name', variable('CFP_PROJECT_NAME')],
         context: context()
-            ->withPty(false)
+            ->withInput(variable('CFP_PASSWORD'))
             ->withTty(false)
+            ->withPty(false)
     );
 
     run(
-        command: [
-            __DIR__ . '/node_modules/.bin/wrangler',
-            'pages',
-            'deploy',
-            'public',
-            '--project-name', variable('CFP_PROJECT_NAME'),
-        ],
+        command: [$wrangler, 'pages', 'deploy', 'public', '--project-name', variable('CFP_PROJECT_NAME')],
         context: context()
             ->toInteractive()
             ->withWorkingDirectory(__DIR__ . '/dist')

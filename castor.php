@@ -70,6 +70,7 @@ function build(bool $noOpen = false): void
 
     fs()->mirror(__DIR__ . '/src/cloudflare-functions', __DIR__ . '/dist/functions');
     fs()->mirror(__DIR__ . '/src/icons', __DIR__ . '/dist/public');
+    fs()->copy(__DIR__ . '/src/robots.txt', __DIR__ . '/dist/public/robots.txt');
 
     $filesDirectory = variable('FILES_DIRECTORY');
     fs()->mirror($filesDirectory, __DIR__ . '/dist/public/upload');

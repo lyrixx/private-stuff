@@ -304,16 +304,17 @@ function deploy(): void
 
     // Always deploy to the production environment, whatever the local git
     // branch: a preview deployment does not get the production secrets, so
-    // CFP_PASSWORD would be empty and the site would be publicly readable
+    // CFP_PASSWORD would be empty and the site would be publicly readable.
+    // Not interactive: toInteractive() allows failure, so a failed deploy
+    // would go unnoticed (the password check below would hit the previous
+    // deployment), and it cannot run without a TTY (CI, agent)
     run(
         command: [
             $wrangler, 'pages', 'deploy', 'public',
             '--project-name', variable('CFP_PROJECT_NAME'),
             '--branch', variable('CFP_PRODUCTION_BRANCH', 'main'),
         ],
-        context: context()
-            ->toInteractive()
-            ->withWorkingDirectory(__DIR__ . '/dist')
+        context: context()->withWorkingDirectory(__DIR__ . '/dist')
     );
 
     $url = \sprintf('https://%s.pages.dev/', variable('CFP_PROJECT_NAME'));

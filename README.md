@@ -122,14 +122,35 @@ It will, if needed:
 
 You can also run the `castor` command to see all others available tasks.
 
+## Shamir's secret sharing
+
+Some private stuff is too sensitive for the website (main password, bank
+accounts, etc.), but must be reachable if something really bad happens. It
+goes in a document sealed with [Shamir's secret
+sharing](https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing): the document
+is encrypted, and its key is split between N people I trust. Any K of them can
+open it, fewer cannot.
+
+The sealing is done by [ReMemory](https://github.com/eljojo/rememory), that
+castor downloads in `var/rememory/` and checks against a pinned checksum.
+
+1. write the document in Markdown in `data/shamir.md` (see
+   `data/shamir.md.dist`)
+2. list the holders, the threshold K and the language of the bundles in
+   `data/shamir.yaml` (see `data/shamir.yaml.dist`)
+3. check the document with `castor shamir:preview`
+4. seal it with `castor shamir:seal`
+5. send each bundle of `var/shamir/output/bundles/` to its holder, then delete
+   `var/shamir/`: together, the bundles open the document
+
+A holder opens the `recover.html` page of their bundle in any browser, offline,
+nothing to install, and adds the bundles of the other holders until the
+document opens.
+
+Sealing again creates a new key: the previous bundles cannot open the new
+document, send the new bundles to every holder.
+
 ## License
 
 This repository is under the MIT license. See the complete license in the
 [LICENSE](LICENSE) file.
-
-## Plan for the future
-
-I would like to setup a web page with all my others private stuff (main
-password, bank account, etc) in case something really bad happens. This page
-will be protected with [Shamir's secret sharing
-](https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing).

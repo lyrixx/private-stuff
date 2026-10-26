@@ -7,6 +7,8 @@
 /data/emergency_contacts.yaml
 /data/files/
 /data/recovery_codes.yaml
+/data/shamir.md
+/data/shamir.yaml
 /dist/
 /node_modules/
 /var/

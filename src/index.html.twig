@@ -2,87 +2,96 @@
 
 {% extends "base.html.twig" %}
 
+{% import 'macros.html.twig' as ui %}
+
 {% block title %}Private Stuff{% endblock %}
-{% block subtitle %}All the most important information in case of emergency{% endblock %}
+{% block subtitle %}All the most important information in case of emergency.{% endblock %}
 
 {% block container %}
-    <div class="panel-section">
-        <h2 class="panel-title">Useful Informations</h2>
+    <section class="panel">
+        <header class="panel-head">
+            <h2 class="panel-title">Emergency contacts</h2>
+            <span class="panel-ref">01 / 03</span>
+        </header>
+        <div class="table-head" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span></div>
+        <ul class="rows">
+            {% for contact in emergency_contacts %}
+                <li class="contact">
+                    <span class="contact-name">{{ contact.name }}</span>
+                    <a href="tel:{{ contact.phone }}" class="field field-phone">{{ ui.icon('phone') }}<span>{{ contact.phone }}</span></a>
+                    <a href="mailto:{{ contact.email }}" class="field">{{ ui.icon('mail') }}<span>{{ contact.email }}</span></a>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
 
-        <div class="card-block card-no-hover">
-            <div class="card-content">
-                <h3 class="card-title">🫂 Emergency contacts</h3>
-                <div class="emergency-contacts">
-                    <ul class="contact-list">
-                        {% for contact in emergency_contacts %}
-                            <li class="contact-item">
-                                <span class="contact-name">{{ contact.name }}</span> -
-                                <a href="tel:{{ contact.phone }}" class="contact-phone">☎ {{ contact.phone }}</a> -
-                                <a href="mailto:{{ contact.email }}" class="contact-email">📧 {{ contact.email }}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
+    <section class="panel">
+        <header class="panel-head">
+            <h2 class="panel-title">Administrative contacts</h2>
+            <span class="panel-ref">02 / 03</span>
+        </header>
+        <div class="table-head" aria-hidden="true"><span>Organisation</span><span>Phone</span><span>Email</span></div>
+        <ul class="rows">
+            {% for contact in administrative_contacts %}
+                <li class="contact">
+                    <span class="contact-name">
+                        {{ contact.name }}
+                        <span class="contact-account">Account <b>{{ contact.account_id }}</b></span>
+                    </span>
+                    {% if contact.phone ?? false %}
+                        <a href="tel:{{ contact.phone }}" class="field field-phone">{{ ui.icon('phone') }}<span>{{ contact.phone }}</span></a>
+                    {% else %}
+                        {# Keeps the email in its column #}
+                        <span></span>
+                    {% endif %}
+                    {% if contact.email ?? false %}
+                        <a href="mailto:{{ contact.email }}" class="field">{{ ui.icon('mail') }}<span>{{ contact.email }}</span></a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
 
-        <div class="card-block card-no-hover">
-            <div class="card-content">
-                <h3 class="card-title">🏦 Administrative contacts</h3>
-                <div class="emergency-contacts">
-                    <ul class="contact-list">
-                        {% for contact in administrative_contacts %}
-                            <li class="contact-item">
-                                <span class="contact-name">{{ contact.name }}</span> -
-                                <span class="contact-id" title="account number">{{ contact.account_id }}</span>
-                                {% if contact.phone ?? false %}
-                                    - <a href="tel:{{ contact.phone }}" class="contact-phone">☎ {{ contact.phone }}</a>
-                                {% endif %}
-                                {% if contact.email ?? false %}
-                                    - <a href="mailto:{{ contact.email }}" class="contact-email">📧 {{ contact.email }}</a>
-                                {% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="panel-section">
-        <h2 class="panel-title">Useful Links</h2>
-
-        <a href="./files" class="card-block" rel="noopener noreferrer">
-            <div class="card-content">
-                <h3 class="card-title">📂 List of files</h3>
-                <p class="card-description">
-                    Some important files
-                </p>
-            </div>
-        </a>
-
-        <a href="./recovery-codes" class="card-block" rel="noopener noreferrer">
-            <div class="card-content">
-                <h3 class="card-title">🔑 Recovery codes</h3>
-                <p class="card-description">
-                    Some recovery codes
-                    <br />
-                    <small>(Authentication required)</small>
-                </p>
-            </div>
-        </a>
-
-        {% if dev %}
-            <a href="./recovery-codes-decoded" class="card-block" rel="noopener noreferrer">
-                <div class="card-content">
-                    <h3 class="card-title">🕵🏼 Recovery codes</h3>
-                    <p class="card-description">
-                        Some recovery codes
-                        <br />
-                        <small>(Only visible in dev mode)</small>
-                    </p>
-                </div>
-            </a>
-        {% endif %}
-    </div>
+    <section class="panel">
+        <header class="panel-head">
+            <h2 class="panel-title">Documents</h2>
+            <span class="panel-ref">03 / 03</span>
+        </header>
+        <ul class="rows">
+            <li>
+                <a href="./files" class="link-row">
+                    <span class="link-row-ref link-row-ref-index">D1</span>
+                    <span class="link-row-body">
+                        <span class="link-row-title">Files</span>
+                        <span class="link-row-description">Important documents to download</span>
+                    </span>
+                    {{ ui.icon('arrow-right') }}
+                </a>
+            </li>
+            <li>
+                <a href="./recovery-codes" class="link-row">
+                    <span class="link-row-ref link-row-ref-index">D2</span>
+                    <span class="link-row-body">
+                        <span class="link-row-title">Recovery codes</span>
+                        <span class="link-row-description">2FA recovery codes of my accounts</span>
+                    </span>
+                    <span class="stamp">{{ ui.icon('lock') }}Sealed</span>
+                    {{ ui.icon('arrow-right') }}
+                </a>
+            </li>
+            {% if dev %}
+                <li>
+                    <a href="./recovery-codes-decoded" class="link-row">
+                        <span class="link-row-ref link-row-ref-index">D3</span>
+                        <span class="link-row-body">
+                            <span class="link-row-title">Recovery codes, decrypted</span>
+                            <span class="link-row-description">The same page, without password</span>
+                        </span>
+                        <span class="stamp stamp-dev">Dev only</span>
+                        {{ ui.icon('arrow-right') }}
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </section>
 {% endblock %}

@@ -1,19 +1,19 @@
+{% set has_back_link = false %}
+
 {% extends "base_login.html.twig" %}
 
 {% block login %}
-    <form method="post" action="/cfp_login" class="form" >
-        <p class="form-description">
-            To display the content, please enter your password
-            {% if default_cfp_password %}
-                <br />Try <b>"pass"</b>
-            {% endif %}
-        </p>
-        ${withError ? `<div class="form-error" id="password-error">Incorrect password, please try again.</div>` : ''}
+    <form method="post" action="/cfp_login" class="form">
+        <label for="staticrypt-password" class="form-label">Password</label>
         <div class="input-wrapper">
-            <input type="password" name="password" id="staticrypt-password" class="form-input" placeholder="Password" required autofocus>
-            <button type="button" class="toggle-password" aria-label="Show password">👁️</button>
+            <input type="password" name="password" id="staticrypt-password" class="form-input" autocomplete="current-password" required autofocus>
+            <button type="button" class="toggle-password" aria-label="Show password">Show</button>
         </div>
+        ${withError ? `<p class="form-error" id="password-error">Incorrect password, please try again.</p>` : ''}
+        {% if default_cfp_password %}
+            <p class="form-hint">Default password: <code>pass</code></p>
+        {% endif %}
         <input type="hidden" name="redirect" value="${redirectPath}" />
-        <button type="submit" class="form-button">Open</button>
+        <button type="submit" class="form-button">Unlock</button>
     </form>
 {% endblock %}

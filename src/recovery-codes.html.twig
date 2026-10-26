@@ -1,41 +1,44 @@
 {% extends "base_login.html.twig" %}
 
 {% block title %}2FA Recovery Codes{% endblock %}
-{% block subtitle %}Find bellow all your 2FA recovery codes</{% endblock %}
+{% block subtitle %}Find below all your 2FA recovery codes. Tap a code to copy it.{% endblock %}
 
 {% block container %}
     {% if dev %}
-        <div class="panel-section">
-            You can see this page only because the site has been built in dev mode
-        </div>
+        <p class="notice">You can see this page only because the site has been built in dev mode.</p>
     {% endif %}
 
     {% for website in recovery_codes %}
-        <div class="panel-section">
-            <h2 class="panel-title">{{ website.name}}</h2>
+        <section class="panel">
+            <header class="panel-head">
+                <h2 class="panel-title">{{ website.name }}</h2>
+                <span class="panel-ref">{{ '%02d'|format(loop.index) }} / {{ '%02d'|format(loop.length) }}</span>
+            </header>
             {% for account in website.accounts %}
                 <div class="account">
-                    <div class="username">{{ account.name }}</div>
-                    <div class="codes">
+                    <div class="account-name">{{ account.name }}</div>
+                    <ul class="codes">
                         {% for code in account.codes %}
-                            <span class="code">{{ code }}</span>
+                            <li><button type="button" class="code" data-code="{{ code }}">{{ code }}</button></li>
                         {% endfor %}
-                    </div>
+                    </ul>
                 </div>
             {% endfor %}
-        </div>
+        </section>
     {% endfor %}
 {% endblock %}
 
 {% block scripts %}
     <script>
         document.querySelectorAll('.code').forEach(code => {
-            code.addEventListener('click', function() {
-                navigator.clipboard.writeText(this.textContent);
-                const originalText = this.textContent;
-                this.textContent = 'Copied!';
-                setTimeout(() => {
-                    this.textContent = originalText;
+            code.addEventListener('click', async function() {
+                await navigator.clipboard.writeText(this.dataset.code);
+                this.textContent = 'Copied';
+                this.classList.add('is-copied');
+                clearTimeout(this.resetTimeout);
+                this.resetTimeout = setTimeout(() => {
+                    this.textContent = this.dataset.code;
+                    this.classList.remove('is-copied');
                 }, 1000);
             });
         });

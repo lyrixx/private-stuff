@@ -1,12 +1,17 @@
+{% import 'macros.html.twig' as ui %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="robots" content="noindex nofollow">
+        <meta name="color-scheme" content="dark">
+        <meta name="theme-color" content="#0b1730">
         {% block meta %}{% endblock %}
         <title>{% block title %}{% endblock %}</title>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
         <link rel="manifest" href="./manifest.json">
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -28,14 +33,21 @@
     <body>
         <div class="container">
             {% if has_back_link ?? true %}
-                <a href="./" class="back-button">← Back to Home</a>
+                <nav class="topbar">
+                    <a href="./" class="back-link">{{ ui.icon('arrow-left') }}<span>Private Stuff</span></a>
+                </nav>
             {% endif %}
 
-            <header>
+            <header class="cover">
+                {{ ui.emblem() }}
                 <h1>{{ block('title') }}</h1>
                 <p class="subtitle">{% block subtitle %}{% endblock %}</p>
             </header>
             {% block container %}{% endblock %}
+            <footer class="mrz" aria-hidden="true">
+                PS&lt;PRIVATE&lt;&lt;STUFF&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br>
+                EMERGENCY&lt;&lt;INFORMATION&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;0
+            </footer>
         </div>
         {% block scripts %}{% endblock %}
     </body>

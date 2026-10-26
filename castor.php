@@ -411,6 +411,7 @@ function staticrypt(string $title, string $filename): void
             __DIR__ . '/node_modules/.bin/staticrypt',
             '--template', __DIR__ . '/var/tmp/staticrypt.html',
             '--template-title', $title,
+            '--template-error', 'Incorrect password, please try again.',
             '--config', 'false', // No need to store the salt, remember me is disabled
             '--remember', 'false', // Since data are sensitive, we don't want to remember the password
             ...(variable('defaultPassword') ? ['--short'] : []),
@@ -456,40 +457,10 @@ function get_files(string $directory): array
             'path' => $path,
             'extension' => $extension,
             'name' => $name,
-            'emoji' => get_emoji_for_file_extension($extension),
         ];
     }
 
     return $result;
-}
-
-function get_emoji_for_file_extension(string $extension): string
-{
-    return match (strtolower($extension)) {
-        'pdf' => '📄',
-        'doc' => '📝',
-        'docx' => '📝',
-        'xls' => '📊',
-        'xlsx' => '📊',
-        'ppt' => '📽️',
-        'pptx' => '📽️',
-        'jpg' => '🖼️',
-        'jpeg' => '🖼️',
-        'png' => '🖼️',
-        'gif' => '🎭',
-        'mp3' => '🎵',
-        'wav' => '🎵',
-        'mp4' => '🎬',
-        'avi' => '🎬',
-        'zip' => '🗜️',
-        'rar' => '🗜️',
-        'txt' => '📄',
-        'php' => '🐘',
-        'html' => '🌐',
-        'css' => '🎨',
-        'js' => '⚡',
-        default => '📰',
-    };
 }
 
 function humanize(string $text): string

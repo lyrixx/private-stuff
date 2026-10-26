@@ -5,90 +5,94 @@
 {% import 'macros.html.twig' as ui %}
 
 {% block title %}Private Stuff{% endblock %}
-{% block subtitle %}All the most important information in case of emergency.{% endblock %}
+{% block kicker %}In case of emergency{% endblock %}
+{% block heading %}Everything you need, in one place.{% endblock %}
+{% block subtitle %}Start by calling one of the people below. They know what to do.{% endblock %}
 
 {% block container %}
-    <section class="panel">
-        <header class="panel-head">
-            <h2 class="panel-title">Emergency contacts</h2>
-            <span class="panel-ref">01 / 03</span>
-        </header>
-        <div class="table-head" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span></div>
-        <ul class="rows">
+    <section class="section">
+        <h2 class="section-title">Emergency contacts</h2>
+        <ul class="people">
             {% for contact in emergency_contacts %}
-                <li class="contact">
-                    <span class="contact-name">{{ contact.name }}</span>
-                    <a href="tel:{{ contact.phone }}" class="field field-phone">{{ ui.icon('phone') }}<span>{{ contact.phone }}</span></a>
-                    <a href="mailto:{{ contact.email }}" class="field">{{ ui.icon('mail') }}<span>{{ contact.email }}</span></a>
+                <li class="card person">
+                    <div class="person-head">
+                        <span class="avatar" aria-hidden="true">{{ ui.initials(contact.name) }}</span>
+                        <div class="person-body">
+                            <div class="person-name">{{ contact.name }}</div>
+                            <div class="person-detail">{{ contact.phone }}</div>
+                            <div class="person-detail">{{ contact.email }}</div>
+                        </div>
+                    </div>
+                    <div class="buttons">
+                        <a href="tel:{{ contact.phone }}" class="button button-primary">{{ ui.icon('phone') }}Call</a>
+                        <a href="mailto:{{ contact.email }}" class="button button-secondary">{{ ui.icon('mail') }}Email</a>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
     </section>
 
-    <section class="panel">
-        <header class="panel-head">
-            <h2 class="panel-title">Administrative contacts</h2>
-            <span class="panel-ref">02 / 03</span>
-        </header>
-        <div class="table-head" aria-hidden="true"><span>Organisation</span><span>Phone</span><span>Email</span></div>
-        <ul class="rows">
+    <section class="section">
+        <h2 class="section-title">Administrative contacts</h2>
+        <ul class="card list">
             {% for contact in administrative_contacts %}
-                <li class="contact">
-                    <span class="contact-name">
-                        {{ contact.name }}
-                        <span class="contact-account">Account <b>{{ contact.account_id }}</b></span>
+                <li class="list-row">
+                    <span class="list-icon" aria-hidden="true">{{ ui.initials(contact.name) }}</span>
+                    <span class="list-body">
+                        <span class="list-title">{{ contact.name }}</span>
+                        <span class="list-description list-details">
+                            <span>Account {{ contact.account_id }}</span>
+                            {% if contact.phone ?? false %}<span>{{ contact.phone }}</span>{% endif %}
+                            {% if contact.email ?? false %}<span>{{ contact.email }}</span>{% endif %}
+                        </span>
                     </span>
-                    {% if contact.phone ?? false %}
-                        <a href="tel:{{ contact.phone }}" class="field field-phone">{{ ui.icon('phone') }}<span>{{ contact.phone }}</span></a>
-                    {% else %}
-                        {# Keeps the email in its column #}
-                        <span></span>
-                    {% endif %}
-                    {% if contact.email ?? false %}
-                        <a href="mailto:{{ contact.email }}" class="field">{{ ui.icon('mail') }}<span>{{ contact.email }}</span></a>
-                    {% endif %}
+                    <span class="list-actions">
+                        {% if contact.phone ?? false %}
+                            <a href="tel:{{ contact.phone }}" class="icon-button" aria-label="Call {{ contact.name }}">{{ ui.icon('phone') }}</a>
+                        {% endif %}
+                        {% if contact.email ?? false %}
+                            <a href="mailto:{{ contact.email }}" class="icon-button" aria-label="Email {{ contact.name }}">{{ ui.icon('mail') }}</a>
+                        {% endif %}
+                    </span>
                 </li>
             {% endfor %}
         </ul>
     </section>
 
-    <section class="panel">
-        <header class="panel-head">
-            <h2 class="panel-title">Documents</h2>
-            <span class="panel-ref">03 / 03</span>
-        </header>
-        <ul class="rows">
+    <section class="section">
+        <h2 class="section-title">Documents</h2>
+        <ul class="card list">
             <li>
-                <a href="./files" class="link-row">
-                    <span class="link-row-ref link-row-ref-index">D1</span>
-                    <span class="link-row-body">
-                        <span class="link-row-title">Files</span>
-                        <span class="link-row-description">Important documents to download</span>
+                <a href="./files" class="list-row list-link">
+                    <span class="list-icon">{{ ui.icon('file') }}</span>
+                    <span class="list-body">
+                        <span class="list-title">Files</span>
+                        <span class="list-description">Important documents to download</span>
                     </span>
-                    {{ ui.icon('arrow-right') }}
+                    {{ ui.icon('chevron-right') }}
                 </a>
             </li>
             <li>
-                <a href="./recovery-codes" class="link-row">
-                    <span class="link-row-ref link-row-ref-index">D2</span>
-                    <span class="link-row-body">
-                        <span class="link-row-title">Recovery codes</span>
-                        <span class="link-row-description">2FA recovery codes of my accounts</span>
+                <a href="./recovery-codes" class="list-row list-link">
+                    <span class="list-icon">{{ ui.icon('key') }}</span>
+                    <span class="list-body">
+                        <span class="list-title">Recovery codes</span>
+                        <span class="list-description">2FA recovery codes of my accounts</span>
                     </span>
-                    <span class="stamp">{{ ui.icon('lock') }}Sealed</span>
-                    {{ ui.icon('arrow-right') }}
+                    <span class="tag">{{ ui.icon('lock') }}Password</span>
+                    {{ ui.icon('chevron-right') }}
                 </a>
             </li>
             {% if dev %}
                 <li>
-                    <a href="./recovery-codes-decoded" class="link-row">
-                        <span class="link-row-ref link-row-ref-index">D3</span>
-                        <span class="link-row-body">
-                            <span class="link-row-title">Recovery codes, decrypted</span>
-                            <span class="link-row-description">The same page, without password</span>
+                    <a href="./recovery-codes-decoded" class="list-row list-link">
+                        <span class="list-icon">{{ ui.icon('lock-open') }}</span>
+                        <span class="list-body">
+                            <span class="list-title">Recovery codes, decrypted</span>
+                            <span class="list-description">The same page, without password</span>
                         </span>
-                        <span class="stamp stamp-dev">Dev only</span>
-                        {{ ui.icon('arrow-right') }}
+                        <span class="tag tag-dev">Dev only</span>
+                        {{ ui.icon('chevron-right') }}
                     </a>
                 </li>
             {% endif %}

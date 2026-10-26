@@ -9,21 +9,20 @@
     {% endif %}
 
     {% for website in recovery_codes %}
-        <section class="panel">
-            <header class="panel-head">
-                <h2 class="panel-title">{{ website.name }}</h2>
-                <span class="panel-ref">{{ '%02d'|format(loop.index) }} / {{ '%02d'|format(loop.length) }}</span>
-            </header>
-            {% for account in website.accounts %}
-                <div class="account">
-                    <div class="account-name">{{ account.name }}</div>
-                    <ul class="codes">
-                        {% for code in account.codes %}
-                            <li><button type="button" class="code" data-code="{{ code }}">{{ code }}</button></li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endfor %}
+        <section class="section">
+            <h2 class="section-title">{{ website.name }}</h2>
+            <div class="card">
+                {% for account in website.accounts %}
+                    <div class="account">
+                        <div class="account-name">{{ account.name }}</div>
+                        <ul class="codes">
+                            {% for code in account.codes %}
+                                <li><button type="button" class="code" data-code="{{ code }}">{{ code }}</button></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
         </section>
     {% endfor %}
 {% endblock %}

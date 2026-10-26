@@ -15,31 +15,31 @@
  */
 
 /*
- * "Passport" theme: always dark, navy like a passport cover, with gold details.
- * Keep the navy and gold in sync with src/manifest.json.twig, the theme-color
- * of src/base.html.twig and the icons of src/icons/.
+ * "Night light" theme: always dark, navy with the warm glow of an amber lamp.
+ * Keep the navy and the amber in sync with src/manifest.json.twig, the
+ * theme-color of src/base.html.twig and the icons of src/icons/.
  */
 :root {
     color-scheme: dark;
 
-    --color-bg: #0b1730;
-    --color-bg-glow: #132650;
-    --color-panel: rgba(255, 255, 255, 0.018);
-    --color-field: rgba(4, 10, 24, 0.45);
-    --color-line: rgba(205, 174, 107, 0.14);
-    --color-line-strong: rgba(205, 174, 107, 0.34);
-    --color-line-neutral: rgba(149, 161, 185, 0.4);
-    --color-gold: #cdae6b;
-    --color-gold-bright: #dcc085;
-    --color-gold-dim: #a08a58;
-    --color-gold-soft: rgba(205, 174, 107, 0.1);
-    --color-text: #ece6d6;
-    --color-text-muted: #95a1b9;
-    --color-danger: #f0a196;
-    --color-danger-soft: rgba(240, 161, 150, 0.08);
+    --color-bg: #0b1430;
+    --color-glow-warm: rgba(255, 170, 80, 0.16);
+    --color-glow-cold: rgba(120, 140, 255, 0.08);
+    --color-surface: #121d3e;
+    --color-surface-2: #17244a;
+    --color-surface-3: #1d2c58;
+    --color-border: rgba(255, 255, 255, 0.06);
+    --color-text: #f5efe4;
+    --color-text-muted: #a9b0c8;
+    --color-amber: #ffb866;
+    --color-amber-soft: rgba(255, 184, 102, 0.14);
+    --color-amber-contrast: #1d1406;
+    --color-neutral-soft: rgba(255, 255, 255, 0.07);
+    --color-danger: #ff9a8b;
+    --color-danger-soft: rgba(255, 154, 139, 0.12);
 
-    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --font-sans: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
     --space-1: 0.25rem;
     --space-2: 0.5rem;
@@ -48,10 +48,12 @@
     --space-5: 1.25rem;
     --space-6: 1.5rem;
     --space-8: 2rem;
+    --space-10: 2.5rem;
     --space-12: 3rem;
 
-    --radius: 6px;
-    --radius-small: 3px;
+    --radius-small: 10px;
+    --radius: 14px;
+    --radius-large: 22px;
 
     --transition: 150ms ease;
 }
@@ -62,7 +64,10 @@ html {
 
 body {
     min-height: 100vh;
-    background: radial-gradient(56rem 32rem at 50% -8%, var(--color-bg-glow), transparent 70%) no-repeat, var(--color-bg);
+    background:
+        radial-gradient(42rem 30rem at 12% -6%, var(--color-glow-warm), transparent 65%) no-repeat,
+        radial-gradient(30rem 24rem at 100% 0%, var(--color-glow-cold), transparent 70%) no-repeat,
+        var(--color-bg);
     color: var(--color-text);
     font-family: var(--font-sans);
     font-size: 1rem;
@@ -73,7 +78,7 @@ body {
 }
 
 ::selection {
-    background: rgba(205, 174, 107, 0.3);
+    background: rgba(255, 184, 102, 0.3);
 }
 
 a {
@@ -82,7 +87,7 @@ a {
 }
 
 :focus-visible {
-    outline: 2px solid var(--color-gold);
+    outline: 2px solid var(--color-amber);
     outline-offset: 2px;
     border-radius: var(--radius-small);
 }
@@ -102,8 +107,8 @@ code {
 }
 
 .icon {
-    width: 1rem;
-    height: 1rem;
+    width: 1.125rem;
+    height: 1.125rem;
     flex: none;
 }
 
@@ -111,308 +116,358 @@ code {
     display: none !important;
 }
 
-/* Small uppercase mono labels, like the field names of a passport */
-.back-link,
-.form-label,
-.panel-ref,
-.panel-title,
-.table-head,
-.toggle-password {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    line-height: 1.3;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-}
-
 /* Layout */
 
 .container {
-    max-width: 50rem;
+    max-width: 47.5rem;
     margin: 0 auto;
-    padding: clamp(var(--space-8), 7vw, 4.5rem) var(--space-4) var(--space-12);
+    padding: clamp(var(--space-8), 6vw, 3.5rem) var(--space-5) var(--space-12);
 }
 
 .topbar {
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-10);
 }
 
-.back-link {
+.brand {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
-    color: var(--color-gold-dim);
+    gap: 0.625rem;
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    font-weight: 600;
     transition: color var(--transition);
 }
 
-.back-link .icon {
-    width: 0.875rem;
-    height: 0.875rem;
+a.brand:hover {
+    color: var(--color-text);
+}
+
+.brand .icon {
+    width: 1rem;
+    height: 1rem;
     transition: transform var(--transition);
 }
 
-.back-link:hover {
-    color: var(--color-gold);
-}
-
-.back-link:hover .icon {
+a.brand:hover .icon {
     transform: translateX(-2px);
 }
 
-/* Cover */
-
-.cover {
-    margin-bottom: 3.5rem;
-    text-align: center;
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 9px;
+    background: var(--color-amber);
+    color: var(--color-bg);
+    font-size: 0.8125rem;
+    font-weight: 800;
 }
 
-.emblem {
-    display: block;
-    width: 5.25rem;
-    height: 5.25rem;
-    margin: 0 auto var(--space-6);
-    color: var(--color-gold);
-    opacity: 0.9;
+.hero {
+    margin-bottom: var(--space-10);
 }
 
-.cover h1 {
-    /* The left padding balances the tracking after the last letter */
-    padding-left: 0.32em;
-    color: var(--color-gold);
-    font-size: clamp(1.25rem, 4.5vw, 1.625rem);
-    font-weight: 500;
-    line-height: 1.35;
-    letter-spacing: 0.32em;
-    text-transform: uppercase;
+.kicker {
+    margin-bottom: 0.375rem;
+    color: var(--color-amber);
+    font-size: 0.9375rem;
+    font-weight: 700;
+}
+
+.hero h1 {
+    font-size: clamp(2rem, 7vw, 2.875rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    overflow-wrap: anywhere;
 }
 
 .subtitle {
     max-width: 34rem;
-    margin: var(--space-3) auto 0;
+    margin-top: 0.625rem;
     color: var(--color-text-muted);
+    font-size: 1.125rem;
 }
 
 .subtitle:empty {
     display: none;
 }
 
-/* Panels, like the pages of a passport */
-
-.panel {
-    padding: var(--space-6) var(--space-8) var(--space-2);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius);
-    background: var(--color-panel);
+.footer {
+    margin-top: var(--space-12);
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
 }
 
-.panel + .panel {
-    margin-top: var(--space-5);
+/* Sections and cards */
+
+.section + .section {
+    margin-top: var(--space-10);
 }
 
-.panel-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: var(--space-4);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--color-line);
-}
-
-.panel-title {
-    color: var(--color-gold);
+.section-title {
+    margin-bottom: 0.875rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     overflow-wrap: anywhere;
 }
 
-.panel-ref {
-    color: var(--color-gold-dim);
-    white-space: nowrap;
-}
-
-.rows > li + li {
-    border-top: 1px dashed var(--color-line);
-}
-
-.empty {
-    padding: var(--space-5) 0;
-    color: var(--color-text-muted);
+.card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-large);
+    background: var(--color-surface);
 }
 
 .notice {
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-8);
     padding: var(--space-3) var(--space-4);
-    border: 1px dashed var(--color-line-neutral);
     border-radius: var(--radius);
-    color: var(--color-text-muted);
-    font-size: 0.875rem;
-    text-align: center;
+    background: var(--color-amber-soft);
+    color: var(--color-amber);
+    font-size: 0.9375rem;
+    font-weight: 600;
 }
 
-/* Contacts */
-
-.table-head,
-.contact {
-    display: grid;
-    grid-template-columns: 1.1fr 1fr 1.5fr;
-    gap: var(--space-4);
+.tag {
+    display: inline-flex;
     align-items: center;
+    gap: 0.375rem;
+    padding: var(--space-1) 0.625rem;
+    border-radius: 999px;
+    background: var(--color-amber-soft);
+    color: var(--color-amber);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
-.table-head {
-    padding: var(--space-4) 0 var(--space-1);
-    color: var(--color-gold-dim);
+.tag .icon {
+    width: 0.8125rem;
+    height: 0.8125rem;
 }
 
-.contact {
-    padding: var(--space-4) 0;
+.tag-dev {
+    background: var(--color-neutral-soft);
+    color: var(--color-text-muted);
 }
 
-.contact-name {
-    font-size: 1.0625rem;
-    font-weight: 500;
+/* Buttons */
+
+.button {
+    display: inline-flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.6875rem 0.875rem;
+    border-radius: var(--radius);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    transition: background var(--transition), filter var(--transition);
+}
+
+.button-primary,
+.form-button {
+    background: var(--color-amber);
+    color: var(--color-amber-contrast);
+}
+
+.button-primary:hover,
+.form-button:hover {
+    filter: brightness(1.08);
+}
+
+.button-secondary {
+    background: var(--color-surface-2);
+    color: var(--color-text);
+}
+
+.button-secondary:hover {
+    background: var(--color-surface-3);
+}
+
+.icon-button {
+    display: grid;
+    place-items: center;
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: var(--radius-small);
+    color: var(--color-text-muted);
+    transition: background var(--transition), color var(--transition);
+}
+
+.icon-button:hover {
+    background: var(--color-surface-2);
+    color: var(--color-amber);
+}
+
+/* Emergency contacts */
+
+.people {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.875rem;
+}
+
+.person {
+    padding: var(--space-5);
+}
+
+.person-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 2.875rem;
+    height: 2.875rem;
+    flex: none;
+    border-radius: 50%;
+    background: var(--color-amber-soft);
+    color: var(--color-amber);
+    font-weight: 800;
+}
+
+.person-body {
+    min-width: 0;
+}
+
+.person-name {
+    font-size: 1.1875rem;
+    font-weight: 700;
     overflow-wrap: anywhere;
 }
 
-.contact-account {
-    display: block;
-    margin-top: 0.125rem;
-    color: var(--color-text-muted);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 400;
-}
-
-.contact-account b {
-    color: var(--color-text);
-    font-weight: 500;
-}
-
-.field {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-width: 0;
+.person-detail {
     color: var(--color-text-muted);
     font-size: 0.9375rem;
     overflow-wrap: anywhere;
-    transition: color var(--transition);
 }
 
-.field-phone {
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
+.buttons {
+    display: flex;
+    gap: 0.625rem;
+    margin-top: 1.125rem;
 }
 
-/* The column headers say what the field is, except on mobile */
-.field .icon {
-    display: none;
-    color: var(--color-gold-dim);
+/* Lists: administrative contacts, documents and files */
+
+.list {
+    overflow: hidden;
 }
 
-.field:hover,
-.field:hover .icon {
-    color: var(--color-gold);
+.list > li + li {
+    border-top: 1px solid var(--color-border);
 }
 
-/* Link rows: documents and files */
-
-.link-row {
+.list-row {
     display: flex;
     align-items: center;
-    gap: var(--space-5);
-    padding: var(--space-4) 0;
+    gap: 0.875rem;
+    padding: var(--space-4) var(--space-5);
 }
 
-.link-row-ref {
-    width: 2.75rem;
+.list-link {
+    transition: background var(--transition);
+}
+
+.list-link:hover {
+    background: var(--color-surface-2);
+}
+
+.list-icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
     flex: none;
-    color: var(--color-gold-dim);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
+    border-radius: 12px;
+    background: var(--color-surface-2);
+    color: var(--color-amber);
+    font-size: 0.875rem;
+    font-weight: 800;
+    transition: background var(--transition);
 }
 
-.link-row-body {
+.list-link:hover .list-icon {
+    background: var(--color-surface-3);
+}
+
+/* File extension */
+.list-icon-text {
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+}
+
+.list-body {
     display: flex;
     flex: 1;
     flex-direction: column;
     min-width: 0;
 }
 
-.link-row-title {
+.list-title {
     font-size: 1.0625rem;
-    font-weight: 500;
+    font-weight: 700;
     overflow-wrap: anywhere;
-    transition: color var(--transition);
 }
 
-.link-row-description {
+.list-description {
     color: var(--color-text-muted);
     font-size: 0.9375rem;
+    overflow-wrap: anywhere;
 }
 
-.link-row > .icon {
-    color: var(--color-gold-dim);
+/* On one line, separated by dots, except on mobile */
+.list-details > span + span::before {
+    content: ' · ';
+}
+
+.list-empty {
+    color: var(--color-text-muted);
+}
+
+.list-actions {
+    display: flex;
+    gap: 0.375rem;
+}
+
+.list-row > .icon {
+    color: var(--color-text-muted);
     transition: color var(--transition), transform var(--transition);
 }
 
-.link-row:hover .link-row-title,
-.link-row:hover > .icon {
-    color: var(--color-gold);
+.list-link:hover > .icon {
+    color: var(--color-amber);
 }
 
-.link-row:hover > .icon {
+.list-link:hover > .icon-chevron-right {
     transform: translateX(3px);
 }
 
-/* Download icon: it moves down, not right */
-.link-row:hover > .icon-download {
+.list-link:hover > .icon-download {
     transform: translateY(2px);
-}
-
-.stamp {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.3125rem 0.5625rem;
-    border: 1px solid var(--color-line-strong);
-    border-radius: var(--radius-small);
-    color: var(--color-gold);
-    font-family: var(--font-mono);
-    font-size: 0.65625rem;
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.stamp .icon {
-    width: 0.75rem;
-    height: 0.75rem;
-}
-
-.stamp-dev {
-    border-style: dashed;
-    border-color: var(--color-line-neutral);
-    color: var(--color-text-muted);
 }
 
 /* Recovery codes */
 
 .account {
-    padding: var(--space-4) 0 var(--space-5);
+    padding: var(--space-5);
 }
 
 .account + .account {
-    border-top: 1px dashed var(--color-line);
+    border-top: 1px solid var(--color-border);
 }
 
 .account-name {
     margin-bottom: var(--space-3);
     color: var(--color-text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     overflow-wrap: anywhere;
 }
 
@@ -425,34 +480,35 @@ code {
 .code {
     width: 100%;
     padding: var(--space-3);
-    border: 1px solid var(--color-line);
+    border: 1px solid transparent;
     border-radius: var(--radius-small);
-    background: var(--color-field);
+    background: var(--color-surface-2);
     color: var(--color-text);
     font-family: var(--font-mono);
     font-size: 0.9375rem;
     font-variant-numeric: slashed-zero;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    transition: border-color var(--transition), background var(--transition), color var(--transition);
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
 }
 
 .code:hover {
-    border-color: var(--color-line-strong);
+    background: var(--color-surface-3);
 }
 
 .code.is-copied {
-    border-color: var(--color-gold);
-    background: var(--color-gold-soft);
-    color: var(--color-gold);
+    border-color: var(--color-amber);
+    background: var(--color-amber-soft);
+    color: var(--color-amber);
+    font-family: var(--font-sans);
+    font-weight: 700;
 }
 
 /* Login */
 
 .login {
-    max-width: 25rem;
-    margin: 0 auto;
-    padding: var(--space-8);
+    max-width: 26rem;
+    padding: var(--space-6);
 }
 
 .form {
@@ -462,7 +518,8 @@ code {
 }
 
 .form-label {
-    color: var(--color-gold-dim);
+    font-size: 0.9375rem;
+    font-weight: 700;
 }
 
 .input-wrapper {
@@ -474,11 +531,11 @@ code {
 .form-input {
     width: 100%;
     padding: var(--space-3) 4.5rem var(--space-3) var(--space-4);
-    border: 1px solid var(--color-line-strong);
-    border-radius: var(--radius-small);
-    background: var(--color-field);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: var(--color-surface-2);
     color: var(--color-text);
-    caret-color: var(--color-gold);
+    caret-color: var(--color-amber);
     font-size: 1rem;
     line-height: 1.5;
     transition: border-color var(--transition), box-shadow var(--transition);
@@ -486,56 +543,52 @@ code {
 
 .form-input:focus {
     outline: none;
-    border-color: var(--color-gold);
-    box-shadow: 0 0 0 3px var(--color-gold-soft);
+    border-color: var(--color-amber);
+    box-shadow: 0 0 0 3px var(--color-amber-soft);
 }
 
 .toggle-password {
     position: absolute;
     right: var(--space-2);
-    padding: var(--space-1) var(--space-2);
+    padding: var(--space-1) 0.625rem;
     border: none;
-    border-radius: var(--radius-small);
+    border-radius: 8px;
     background: transparent;
-    color: var(--color-gold-dim);
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: color var(--transition);
+    transition: background var(--transition), color var(--transition);
 }
 
 .toggle-password:hover {
-    color: var(--color-gold);
+    background: var(--color-surface-3);
+    color: var(--color-text);
 }
 
 .form-button {
     margin-top: var(--space-2);
     padding: 0.8125rem var(--space-6);
     border: none;
-    border-radius: var(--radius-small);
-    background: var(--color-gold);
-    color: var(--color-bg);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: background var(--transition);
-}
-
-.form-button:hover {
-    background: var(--color-gold-bright);
+    transition: filter var(--transition);
 }
 
 .form-error {
-    padding: var(--space-2) var(--space-3);
-    border-left: 2px solid var(--color-danger);
+    padding: 0.625rem 0.875rem;
+    border-radius: var(--radius-small);
     background: var(--color-danger-soft);
     color: var(--color-danger);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
 }
 
 .form-hint {
     color: var(--color-text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
 }
 
 .form-hint code {
@@ -546,13 +599,13 @@ code {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
 }
 
 .checkbox {
     width: 1rem;
     height: 1rem;
-    accent-color: var(--color-gold);
+    accent-color: var(--color-amber);
     cursor: pointer;
 }
 
@@ -564,9 +617,8 @@ code {
 .spinner {
     width: 1.5rem;
     height: 1.5rem;
-    margin: 0 auto;
-    border: 2px solid var(--color-line-strong);
-    border-top-color: var(--color-gold);
+    border: 2px solid var(--color-surface-3);
+    border-top-color: var(--color-amber);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -598,22 +650,21 @@ code {
 .prose h2,
 .prose h3 {
     margin: 2.25rem 0 var(--space-3);
-    color: var(--color-gold);
-    font-weight: 500;
-    line-height: 1.3;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
 }
 
 .prose h1 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
 }
 
 .prose h2 {
-    padding-bottom: var(--space-2);
-    border-bottom: 1px solid var(--color-line);
-    font-size: 1.25rem;
+    font-size: 1.3125rem;
 }
 
 .prose h3 {
+    color: var(--color-amber);
     font-size: 1.0625rem;
 }
 
@@ -640,55 +691,52 @@ code {
 }
 
 .prose li::marker {
-    color: var(--color-gold-dim);
+    color: var(--color-amber);
 }
 
 .prose a {
-    color: var(--color-gold);
+    color: var(--color-amber);
     text-decoration: underline;
     text-underline-offset: 2px;
 }
 
 .prose strong {
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .prose code {
     padding: 0.125rem 0.375rem;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-small);
-    background: var(--color-field);
+    border-radius: 6px;
+    background: var(--color-surface-2);
 }
 
 .prose pre {
     padding: var(--space-4);
     overflow-x: auto;
-    border: 1px solid var(--color-line);
     border-radius: var(--radius-small);
-    background: var(--color-field);
-}
-
-/* A password split over two lines is ambiguous: the table scrolls instead */
-.prose td code {
-    white-space: nowrap;
+    background: var(--color-surface-2);
 }
 
 .prose pre code {
     padding: 0;
-    border: none;
     background: none;
 }
 
 .prose blockquote {
-    padding-left: var(--space-4);
-    border-left: 2px solid var(--color-gold-dim);
-    color: var(--color-text-muted);
+    padding: var(--space-3) var(--space-4);
+    border-left: 3px solid var(--color-amber);
+    border-radius: var(--radius-small);
+    background: var(--color-amber-soft);
+}
+
+.prose blockquote > :last-child {
+    margin-bottom: 0;
 }
 
 .prose hr {
     margin: var(--space-8) 0;
     border: none;
-    border-top: 1px dashed var(--color-line-strong);
+    border-top: 1px solid var(--color-border);
 }
 
 /* Wide tables scroll instead of widening the page */
@@ -703,99 +751,62 @@ code {
 .prose th,
 .prose td {
     padding: var(--space-2) var(--space-4) var(--space-2) 0;
-    border-bottom: 1px dashed var(--color-line);
+    border-bottom: 1px solid var(--color-border);
     text-align: left;
     vertical-align: top;
 }
 
 .prose th {
-    border-bottom-style: solid;
-    color: var(--color-gold-dim);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 700;
 }
 
-/* Machine readable zone, at the bottom of a passport data page */
-
-.mrz {
-    margin-top: var(--space-12);
-    overflow: hidden;
-    color: var(--color-gold-dim);
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    line-height: 1.7;
-    letter-spacing: 0.18em;
-    text-align: center;
+/* A password split over two lines is ambiguous: the table scrolls instead */
+.prose td code {
     white-space: nowrap;
-    opacity: 0.5;
-    user-select: none;
 }
 
 /* Mobile */
 
 @media (max-width: 40rem) {
-    .cover h1 {
-        padding-left: 0.24em;
-        letter-spacing: 0.24em;
-    }
-
-    .cover {
+    .topbar {
         margin-bottom: var(--space-8);
     }
 
-    .emblem {
-        width: 4.5rem;
-        height: 4.5rem;
-        margin-bottom: var(--space-5);
+    .hero {
+        margin-bottom: var(--space-8);
     }
 
-    .panel {
-        padding: var(--space-5) var(--space-4) var(--space-1);
+    .list-row {
+        gap: var(--space-3);
+        padding: 0.875rem var(--space-4);
     }
 
-    .login {
-        padding: var(--space-6) var(--space-4);
+    .list-actions {
+        gap: 0;
     }
 
-    .table-head {
-        display: none;
+    .icon-button {
+        width: 2.125rem;
     }
 
-    .contact {
-        grid-template-columns: 1fr;
-        gap: var(--space-2);
-    }
-
-    .contact-name {
-        margin-bottom: var(--space-1);
-    }
-
-    .field .icon {
+    .list-details > span {
         display: block;
     }
 
-    .link-row {
-        gap: var(--space-3);
+    .list-details > span + span::before {
+        content: none;
     }
 
-    /* Documents are numbered on desktop only, file extensions stay */
-    .link-row-ref-index {
-        display: none;
-    }
-
-    .link-row-ref {
-        width: 2.25rem;
+    .person,
+    .account,
+    .login {
+        padding: var(--space-4);
     }
 
     .prose {
-        padding: var(--space-6) var(--space-4);
-    }
-
-    .mrz {
-        text-align: left;
+        padding: var(--space-5) var(--space-4);
     }
 }
 

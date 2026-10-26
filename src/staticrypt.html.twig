@@ -5,30 +5,27 @@
 #}
 
 {% block title %}/*[|template_title|]*/0{% endblock %}
-{% block subtitle %}This page is encrypted, and need a password to reveal it{% endblock %}
+{% block subtitle %}This page is encrypted. Enter the password to reveal it.{% endblock %}
 
 {% block login %}
-    <div id="staticrypt_loading" class="staticrypt-spinner-container">
-        <div class="staticrypt-spinner"></div>
-    </div>
+    <div id="staticrypt_loading" class="spinner" role="status" aria-label="Loading"></div>
 
-    <div id="staticrypt_content">
+    <div id="staticrypt_content" class="hidden">
         <form class="form" method="post" action="#" id="staticrypt-form">
-            <p class="form-description">
-                To display the content, please enter your password
-                {% if default_password %}
-                    <br />Try <b>"pass"</b>
-                {% endif %}
-            </p>
+            <label for="staticrypt-password" class="form-label">Password</label>
             <div class="input-wrapper">
-                <input type="password" class="form-input" id="staticrypt-password" placeholder="Password" required autofocus>
-                <button type="button" class="toggle-password" aria-label="Show password">👁️</button>
+                <input type="password" class="form-input" id="staticrypt-password" autocomplete="current-password" required autofocus>
+                <button type="button" class="toggle-password" aria-label="Show password">Show</button>
             </div>
+            <p class="form-error hidden" id="staticrypt-error" role="alert"></p>
+            {% if default_password %}
+                <p class="form-hint">Default password: <code>pass</code></p>
+            {% endif %}
             <div class="form-remember hidden" id="staticrypt-remember-label">
                 <input type="checkbox" id="staticrypt-remember" class="checkbox">
-                <label for="remember" class="checkbox-label">Remember Me</label>
+                <label for="staticrypt-remember" class="checkbox-label">Remember me</label>
             </div>
-            <button type="submit" class="form-button">Open</button>
+            <button type="submit" class="form-button">Unlock</button>
         </form>
     </div>
 {% endblock %}
@@ -83,7 +80,9 @@
             const { isSuccessful } = await staticrypt.handleDecryptionOfPage(password, isRememberChecked);
 
             if (!isSuccessful) {
-                alert(templateError);
+                const error = document.getElementById("staticrypt-error");
+                error.textContent = templateError;
+                error.classList.remove("hidden");
             }
         });
     </script>

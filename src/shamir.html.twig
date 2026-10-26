@@ -1,0 +1,15 @@
+{% set has_back_link = false %}
+{% set has_hero = false %}
+
+{% extends "base.html.twig" %}
+
+{# Opened from a file, maybe offline and years after it was sealed: no external assets #}
+{% block site_assets %}{% endblock %}
+
+{% block title %}Private Stuff{% endblock %}
+
+{% block container %}
+    <article class="card prose">
+        {{ document|raw }}
+    </article>
+{% endblock %}

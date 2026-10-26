@@ -1,23 +1,24 @@
 {% extends "base.html.twig" %}
 
-{% block title %}Important files{% endblock %}
-{# {% block subtitle %}Find bellow all your files{% endblock %} #}
+{% import 'macros.html.twig' as ui %}
+
+{% block title %}Files{% endblock %}
+{% block subtitle %}Important documents to download.{% endblock %}
 
 {% block container %}
-    <div class="panel-section">
-        <h2 class="panel-title">File List</h2>
-        <ul class="file-list">
-            {% for file in files %}
-                <li class="file-item">
-                    <a download="{{ file.name }}.{{ file.extension }}" href="./upload/{{ file.path }}">
-                        {{ file.emoji }}
-                        {{ file.name|title }}
-                    </a>
-                </li>
-            {% else %}
-                <li class="file-item">No files found</li>
-            {% endfor %}
-        </ul>
-    </div>
+    <ul class="card list">
+        {% for file in files %}
+            <li>
+                <a download="{{ file.name }}.{{ file.extension }}" href="./upload/{{ file.path }}" class="list-row list-link">
+                    <span class="list-icon list-icon-text">{{ file.extension|upper }}</span>
+                    <span class="list-body">
+                        <span class="list-title">{{ file.name|title }}</span>
+                    </span>
+                    {{ ui.icon('download') }}
+                </a>
+            </li>
+        {% else %}
+            <li class="list-row list-empty">No files found.</li>
+        {% endfor %}
+    </ul>
 {% endblock %}
-

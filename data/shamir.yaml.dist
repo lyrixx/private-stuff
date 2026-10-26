@@ -1,0 +1,15 @@
+# The holders of the Shamir document: any "threshold" of them can open it.
+
+threshold: 2
+
+# Language of the bundles, among the ones of rememory: en, fr, de, es, it…
+language: fr
+
+# The contact is optional, and given to the other holders. Quote phone numbers,
+# or YAML reads them as numbers and drops the "+".
+holders:
+    - name: John Doe
+      contact: "+1234567890"
+    - name: Jane Smith
+      contact: janesmith@example.com
+    - name: Bob

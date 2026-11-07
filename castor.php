@@ -268,26 +268,11 @@ function deploy(): void
         throw new \RuntimeException('You cannot deploy the project with the default password.');
     }
 
-    $wrangler = __DIR__ . '/node_modules/.bin/wrangler';
+    $wrangler = get_wrangler();
 
     // The secret is sent to wrangler on stdin, so wrangler runs without a TTY
     // and cannot start its login flow: check the credentials first
-    check(
-        'Wrangler is authenticated',
-        'Wrangler is not authenticated. Run `node_modules/.bin/wrangler login` once, or set CLOUDFLARE_API_TOKEN (and CLOUDFLARE_ACCOUNT_ID if you have several accounts) in `.env.prod.local`.',
-        function () use ($wrangler): bool {
-            $process = run(
-                command: [$wrangler, 'whoami'],
-                context: context()
-                    ->withQuiet()
-                    ->withAllowFailure()
-                    ->withTty(false)
-                    ->withPty(false)
-            );
-
-            return !str_contains($process->getOutput() . $process->getErrorOutput(), 'not authenticated');
-        },
-    );
+    check_wrangler_authentication();
 
     build(true);
 
@@ -336,6 +321,35 @@ function deploy(): void
     );
 
     io()->success('Project successfully deployed');
+}
+
+function get_wrangler(): string
+{
+    if (!is_dir(__DIR__ . '/node_modules')) {
+        install();
+    }
+
+    return __DIR__ . '/node_modules/.bin/wrangler';
+}
+
+function check_wrangler_authentication(): void
+{
+    check(
+        'Wrangler is authenticated',
+        'Wrangler is not authenticated. Run `node_modules/.bin/wrangler login` once, or set CLOUDFLARE_API_TOKEN (and CLOUDFLARE_ACCOUNT_ID if you have several accounts) in `.env.prod.local`.',
+        static function (): bool {
+            $process = run(
+                command: [get_wrangler(), 'whoami'],
+                context: context()
+                    ->withQuiet()
+                    ->withAllowFailure()
+                    ->withTty(false)
+                    ->withPty(false)
+            );
+
+            return !str_contains($process->getOutput() . $process->getErrorOutput(), 'not authenticated');
+        },
+    );
 }
 
 #[AsContext()]

@@ -56,6 +56,12 @@ be empty there and the middleware would let everyone in. Never create one with
 real data, and consider enabling the Access policy for preview deployments in
 the settings of the Pages project.
 
+`castor cloudflare:clean-deployments` lists the deployments that are not in
+production. Add `--delete` to delete them: only the previews of another branch
+than `CFP_PRODUCTION_BRANCH` are deleted, never the active production deployment
+nor the other deployments of this branch. A `CLOUDFLARE_API_TOKEN` needs the
+`Cloudflare Pages: Edit` permission.
+
 ## Requirements
 
 * [castor](https://castor.jolicode.com/)

@@ -16,15 +16,15 @@ use function Castor\run;
 use function Castor\variable;
 use function Castor\yaml_parse;
 
-const REMEMORY_VERSION = 'v0.0.21';
+const REMEMORY_VERSION = 'v0.0.23';
 
 // From the checksums.txt of the release, pinned here so that a release
 // tampered with after the fact is rejected
 const REMEMORY_SHA256 = [
-    'darwin-amd64' => 'e915bf24ba61aa40f49342093b7cc30edf598b0fd5ec3a69f86595415b41301e',
-    'darwin-arm64' => '3529f366035b988a4b52f8c96dd995ec0da1b6afc9f2685403ee44eb3a63b8aa',
-    'linux-amd64' => '43b9a983a5dfe8cea4e718f2e794237963f8f5f8f66d344d6259ca784d74ba08',
-    'linux-arm64' => '4ed419c0ed88b62ee5dbe27285ca2833f7468a8b9ae32488a1ea6b5ec2b92033',
+    'darwin-amd64' => 'dedd0b6f0684818f7c1f6315e565f895644a2e59d3aa1c5572b0496b29328714',
+    'darwin-arm64' => 'f17e72fd732fa77434940d02f506db2cb84700355325faa1ded0adee9e52bdd8',
+    'linux-amd64' => '8a5d50029225bb1752b5d829c6d4e75d4de5e3a50cc74475a86e2de0ace10cfe',
+    'linux-arm64' => '38fe314dcaad9709342ded169db557afc4b6ea495bfbdf01372dc8ca050ca0a7',
 ];
 
 // Name of the document once the holders have recovered it
